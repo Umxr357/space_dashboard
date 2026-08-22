@@ -1,0 +1,26 @@
+[
+  {
+    "name": "(2019 QC4)",
+    "diameter_meters": 120,
+    "velocity_kmh": 47197,
+    "miss_distance_km": 19189987,
+    "hazardous": false,
+    "assessment": "Traveling at over 47,000 km/h, this 120-meter rock poses no immediate threat as it maintains a safe distance of 19 million kilometers from Earth. It remains a standard celestial passerby that provides more of a scientific observation opportunity than a planetary risk."
+  },
+  {
+    "name": "(2016 RT17)",
+    "diameter_meters": 117,
+    "velocity_kmh": 32154,
+    "miss_distance_km": 26833135,
+    "hazardous": false,
+    "assessment": "This moderately sized 117-meter asteroid is cruising through the void at a relatively leisurely 32,154 km/h. Passing nearly 27 million kilometers away, it remains well beyond any orbital resonance that would cause concern for our home planet."
+  },
+  {
+    "name": "(2007 DK8)",
+    "diameter_meters": 912,
+    "velocity_kmh": 83613,
+    "miss_distance_km": 47187424,
+    "hazardous": false,
+    "assessment": "This massive near-kilometer-wide behemoth is tearing through space at a blistering 83,613 km/h. Despite its intimidating size and velocity, its trajectory keeps it a comfortable 47 million kilometers away, far outside the danger zone."
+  }
+]
