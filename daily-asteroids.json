@@ -5,7 +5,7 @@
     "velocity_kmh": 47197,
     "miss_distance_km": 19189987,
     "hazardous": false,
-    "assessment": "Traveling at a swift 47,197 km/h, this 120-meter rock poses no threat as it cruises past at a comfortable distance of 19 million kilometers. It serves as a standard celestial visitor, large enough for tracking but far enough to remain a non-issue for Earth."
+    "assessment": "At 120 meters wide and traveling at 47,197 km/h, this asteroid is a significant size but remains nearly 20 million kilometers away. There is no risk of impact today as it safely transits deep beyond our lunar orbit."
   },
   {
     "name": "(2016 RT17)",
@@ -13,7 +13,7 @@
     "velocity_kmh": 32154,
     "miss_distance_km": 26833135,
     "hazardous": false,
-    "assessment": "Clocking in at 32,154 km/h, this 117-meter asteroid remains well outside our safety perimeter at over 26 million kilometers away. Its passage offers a great opportunity for routine data collection without posing any risk to our planetary defense."
+    "assessment": "This 117-meter rock is cruising at 32,154 km/h, which is quite leisurely compared to its faster orbital neighbors. Its miss distance of over 26 million kilometers ensures a completely peaceful passage with no threat to Earth's gravity well."
   },
   {
     "name": "(2007 DK8)",
@@ -21,6 +21,6 @@
     "velocity_kmh": 83613,
     "miss_distance_km": 47187424,
     "hazardous": false,
-    "assessment": "This nearly kilometer-wide giant is moving at a blistering 83,613 km/h, marking it as today’s fastest and most massive cosmic visitor. Luckily, its significant miss distance of 47 million kilometers keeps this heavy-hitter as a distant curiosity rather than a kinetic threat."
+    "assessment": "This massive 912-meter giant is hurtling through the void at a blistering 83,613 km/h, making it today's most formidable visitor. Fortunately, it remains at a very safe distance of 47 million kilometers, posing zero danger to our planet despite its intimidating scale."
   }
 ]
