@@ -5,7 +5,7 @@
     "velocity_kmh": 47197,
     "miss_distance_km": 19189987,
     "hazardous": false,
-    "assessment": "At 120 meters wide and traveling at 47,197 km/h, this asteroid is a significant size but remains nearly 20 million kilometers away. There is no risk of impact today as it safely transits deep beyond our lunar orbit."
+    "assessment": "Traveling at over 47,000 km/h, this 120-meter rock is a brisk but distant visitor to our orbital neighborhood. Its massive miss distance of 19 million kilometers ensures we can sleep soundly while it cruises safely by."
   },
   {
     "name": "(2016 RT17)",
@@ -13,7 +13,7 @@
     "velocity_kmh": 32154,
     "miss_distance_km": 26833135,
     "hazardous": false,
-    "assessment": "This 117-meter rock is cruising at 32,154 km/h, which is quite leisurely compared to its faster orbital neighbors. Its miss distance of over 26 million kilometers ensures a completely peaceful passage with no threat to Earth's gravity well."
+    "assessment": "With a modest diameter of 117 meters, this asteroid is moving at a relatively slow pace compared to its peers today. At 26 million kilometers away, it represents a completely harmless curiosity for our deep-space sensors."
   },
   {
     "name": "(2007 DK8)",
@@ -21,6 +21,6 @@
     "velocity_kmh": 83613,
     "miss_distance_km": 47187424,
     "hazardous": false,
-    "assessment": "This massive 912-meter giant is hurtling through the void at a blistering 83,613 km/h, making it today's most formidable visitor. Fortunately, it remains at a very safe distance of 47 million kilometers, posing zero danger to our planet despite its intimidating scale."
+    "assessment": "This behemoth spans nearly a kilometer and is screaming through the void at a blistering 83,613 km/h. While its size is impressive, its distance of 47 million kilometers means it is essentially a ghost passing in the night."
   }
 ]
