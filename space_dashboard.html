@@ -1,0 +1,1165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#030303">
+  <title>NEO THREAT INDEX | Operational Intelligence</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <script type="importmap">
+  {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+  </script>
+  
+  <style>
+    :root {
+      --bg: #030303;
+      --surface: rgba(10, 10, 12, 0.75);
+      --surface-solid: rgba(10, 10, 12, 0.95);
+      --panel-border: #222;
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #d4d4d4;
+      --muted: #737373;
+      --dim: #404040;
+      --white: #ffffff;
+      
+      --accent: #00ffff;
+      --live: #00ff88;
+      --stale: #ffd700;
+      --error: #ff3366;
+      
+      --low: #00ff88;
+      --watch: #ffd700;
+      --elevated: #ff8800;
+      --critical: #ff3366;
+
+      --sans: 'Inter', sans-serif;
+      --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    }
+    
+    * { box-sizing: border-box; }
+    
+    html, body {
+      width: 100%; height: 100%; margin: 0; background: var(--bg); color: var(--text);
+      font-family: var(--sans); overflow: hidden; -webkit-font-smoothing: antialiased;
+    }
+    
+    /* 3D Canvas Background */
+    #space { position: fixed; inset: 0; z-index: 0; }
+    #space canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+    #space canvas:active { cursor: grabbing; }
+
+    /* Aggressive Aerospace Grid */
+    .grid-overlay {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      background-position: center center;
+    }
+    .grid-overlay::before {
+      content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 400px; height: 400px; border: 1px dashed rgba(255,255,255,0.05); border-radius: 50%;
+    }
+    .grid-overlay::after {
+      content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 40px; height: 40px;
+      border-top: 1px solid rgba(255,255,255,0.2); border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    /* CRT Scanlines for Hazard Alert */
+    .scanlines {
+      position: fixed; inset: 0; z-index: 9998; pointer-events: none;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                  linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      background-size: 100% 4px, 3px 100%;
+      opacity: 0; transition: opacity 0.5s ease;
+    }
+    
+    /* Danger Mode Activated */
+    body.danger-mode .scanlines { opacity: 1; }
+    
+    body.danger-mode::after {
+      content: ""; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+      box-shadow: inset 0 0 0px rgba(255, 0, 0, 0);
+      animation: dangerPulse 1s infinite alternate ease-in-out;
+    }
+    
+    @keyframes dangerPulse {
+      0% { box-shadow: inset 0 0 40px rgba(255, 51, 102, 0.1); border: 0px solid transparent; }
+      100% { box-shadow: inset 0 0 120px rgba(255, 51, 102, 0.2), inset 0 0 20px rgba(255, 51, 102, 0.4); border: 4px solid rgba(255, 51, 102, 0.3); }
+    }
+    
+    body.danger-mode #sec-threat-score, body.danger-mode #sec-telemetry {
+      animation: containerGlitch 3s infinite;
+      border-color: rgba(255, 51, 102, 0.4) !important;
+      background: rgba(255, 51, 102, 0.05) !important;
+    }
+    
+    body.danger-mode #ts-score, body.danger-mode #ts-class {
+      color: var(--error) !important;
+      text-shadow: 0 0 15px rgba(255, 51, 102, 0.8);
+    }
+    
+    @keyframes containerGlitch {
+      0%, 94%, 100% { transform: translate(0, 0); filter: none; }
+      95% { transform: translate(-2px, 1px); filter: contrast(120%) drop-shadow(2px 0px rgba(255,0,0,0.5)); }
+      97% { transform: translate(2px, -1px); filter: contrast(120%) hue-rotate(-10deg) drop-shadow(-2px 0px rgba(0,255,255,0.5)); }
+      99% { transform: translate(0px, 1px); filter: none; }
+    }
+    
+    /* Layout */
+    .hud {
+      position: absolute; inset: 0; z-index: 10; pointer-events: none;
+      display: grid; 
+      grid-template-columns: var(--sidebar-width, 420px) 1fr 380px; 
+      grid-template-rows: 64px 1fr auto;
+      transition: grid-template-columns 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .hud.sidebar-closed { --sidebar-width: 0px; }
+    .hud > * { pointer-events: auto; }
+    
+    /* Mobile Canvas Window (Hidden on Desktop) */
+    .mobile-canvas-window { display: none; }
+
+    /* Top Navigation */
+    .topbar {
+      grid-column: 1 / -1; grid-row: 1; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; border-bottom: 1px solid var(--panel-border);
+      background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+    }
+    .icon-btn {
+      background: transparent; border: none; color: var(--muted); cursor: pointer;
+      padding: 8px; margin-right: 16px; border-radius: 4px; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .icon-btn:hover { color: var(--white); background: rgba(255,255,255,0.1); }
+    .brand { display: flex; align-items: center; gap: 16px; }
+    .brand h1 { margin: 0; color: var(--white); font-size: 14px; font-weight: 600; letter-spacing: 0.1em; }
+    .brand span { color: var(--muted); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; border-left: 1px solid var(--line); padding-left: 16px; }
+    .nav-links { display: flex; gap: 24px; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--white); }
+    
+    /* Left Panel (Scrollable Intelligence Feed) */
+    .panel-left {
+      width: 420px;
+      grid-column: 1; grid-row: 2 / -1; overflow-y: auto; overflow-x: hidden;
+      background: var(--surface); backdrop-filter: blur(12px); border-right: 1px solid var(--panel-border);
+      display: flex; flex-direction: column;
+      transform: translateX(0);
+      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s;
+    }
+    .hud.sidebar-closed .panel-left {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    
+    .panel-left::-webkit-scrollbar { width: 4px; }
+    .panel-left::-webkit-scrollbar-thumb { background: var(--dim); }
+    
+    /* Section Formatting */
+    .section { padding: 32px; border-bottom: 1px solid var(--line); }
+    .section-header { margin: 0 0 24px 0; font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; display: flex; align-items: center; gap: 12px; }
+    .section-header::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+    
+    /* Hero */
+    .hero { padding-bottom: 16px; }
+    .hero h2 { margin: 0 0 12px; font-size: 32px; font-weight: 500; color: var(--white); letter-spacing: -0.04em; line-height: 1.1; }
+    .hero p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.6; }
+    
+    /* Threat Overview Grid */
+    .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .ov-card { background: rgba(0,0,0,0.5); padding: 20px; display: flex; flex-direction: column; justify-content: space-between; }
+    .ov-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+    .ov-val { font-family: var(--mono); font-size: 28px; font-weight: 500; color: var(--white); letter-spacing: -0.05em; }
+    .ov-val.accent { color: var(--error); }
+    .ov-unit { font-size: 12px; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
+    
+    /* Threat Distribution */
+    .dist-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .dist-row:last-child { margin-bottom: 0; }
+    .dist-lbl { width: 65px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .dist-bar-bg { flex: 1; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+    .dist-bar-fill { height: 100%; transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .dist-pct { width: 35px; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--white); }
+    
+    /* Close Approaches Table */
+    .table-wrapper { max-height: 350px; overflow-y: auto; padding-right: 8px; }
+    .table-wrapper::-webkit-scrollbar { width: 4px; }
+    .table-wrapper::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 4px; }
+    .approach-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .approach-table th { font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; padding: 0 0 12px 0; border-bottom: 1px solid var(--line); font-weight: 500; position: sticky; top: 0; background: var(--surface); z-index: 2; }
+    .approach-table td { font-family: var(--mono); font-size: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: color 0.2s; }
+    .approach-table tr:hover td { color: var(--white); }
+    .approach-table tr.active td { color: var(--accent); }
+    .td-obj { font-weight: 600; }
+    .td-dist { color: var(--muted); }
+    .td-time { text-align: right; }
+    
+    /* Data Confidence & System Status */
+    .diag-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+    .diag-list li { display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 0.05em; }
+    .diag-lbl { color: var(--muted); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+    .diag-val { font-family: var(--mono); color: var(--white); }
+    
+    /* Right Panel (Object Telemetry) */
+    .panel-right {
+      grid-column: 3; grid-row: 2; margin: 32px 32px 0 0; display: flex; flex-direction: column; gap: 24px;
+      max-height: calc(100vh - 160px); pointer-events: none;
+    }
+    .panel-right > * { pointer-events: auto; }
+    
+    /* Threat Score Module */
+    .threat-module { background: var(--surface); backdrop-filter: blur(12px); border: 1px solid var(--panel-border); padding: 32px; transition: all 0.3s ease; }
+    .tm-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .tm-title { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin: 0; }
+    .tm-score-container { text-align: right; }
+    .tm-score { font-family: var(--mono); font-size: 48px; font-weight: 500; color: var(--white); line-height: 1; letter-spacing: -0.05em; transition: color 0.3s; }
+    .tm-class { font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 8px; transition: color 0.3s; }
+    
+    /* Telemetry Grid & Selector */
+    .tel-selector { position: relative; margin: 0 0 20px 0; }
+    .tel-selector select {
+      appearance: none; -webkit-appearance: none;
+      width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--line);
+      color: var(--white); font-family: var(--mono); font-size: 16px; font-weight: 500;
+      padding: 12px 32px 12px 16px; border-radius: 0; cursor: pointer; outline: none;
+      transition: border-color 0.2s;
+    }
+    .tel-selector select:hover { border-color: var(--muted); }
+    .tel-selector select:focus { border-color: var(--accent); }
+    .tel-selector-arrow {
+      position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+      pointer-events: none; color: var(--muted); font-size: 10px;
+    }
+    
+    .tel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .tel-cell { background: rgba(0,0,0,0.6); padding: 16px; }
+    .tel-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+    .tel-val { font-family: var(--mono); font-size: 16px; color: var(--text); }
+    .tel-val .unit { font-size: 10px; color: var(--dim); margin-left: 4px; letter-spacing: 0; }
+    
+    /* Bottom Center (Legend) */
+    .panel-bottom { grid-column: 2; grid-row: 3; padding: 0 0 32px 32px; display: flex; align-items: flex-end; pointer-events: none; }
+    .legend { display: flex; gap: 24px; background: var(--surface); backdrop-filter: blur(8px); padding: 12px 24px; border: 1px solid var(--panel-border); border-radius: 100px; pointer-events: auto; }
+    .leg-item { display: flex; align-items: center; gap: 8px; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .leg-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .leg-line { width: 16px; height: 1px; }
+    
+    /* Universal Status Dots */
+    .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; }
+    .dot.live { background: var(--live); box-shadow: 0 0 6px var(--live); }
+    .dot.stale { background: var(--stale); box-shadow: 0 0 6px var(--stale); }
+    .dot.error { background: var(--error); box-shadow: 0 0 6px var(--error); }
+    
+    /* Floating Labels (Three.js synced) */
+    .marker { position: fixed; top: 0; left: 0; z-index: 5; pointer-events: none; color: var(--white); text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+    .marker-title { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 4px; }
+    .marker-sub { font-family: var(--mono); font-size: 9px; color: var(--muted); margin-top: 4px; display: block; }
+    
+    /* Boot Sequence / Loader */
+    .boot-overlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; flex-direction: column; justify-content: center; padding: 10vw; transition: opacity 0.8s ease; }
+    .boot-overlay.hidden { opacity: 0; pointer-events: none; }
+    .term-line { font-family: var(--mono); font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    .term-line.active { color: var(--white); }
+    .blink { animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* Target highlight animation */
+    @keyframes pulseHighlight {
+      0% { background-color: rgba(0, 255, 136, 0.15); }
+      100% { background-color: transparent; }
+    }
+    .pulse-target {
+      animation: pulseHighlight 1.2s ease-out;
+    }
+
+    /* Footer / Minimal Bottom Info */
+    .footer-bar { padding: 24px 32px; font-size: 9px; color: var(--dim); letter-spacing: 0.1em; display: flex; justify-content: space-between; }
+    
+    /* Responsive Design - Desktop Scaling */
+    @media (max-width: 1200px) {
+      .hud { grid-template-columns: var(--sidebar-width, 360px) 1fr 300px; }
+      .panel-left { width: 360px; }
+      .ov-val { font-size: 22px; }
+      .tm-score { font-size: 36px; }
+      .tel-val { font-size: 14px; }
+    }
+    
+    /* Responsive Design - Mobile Reordering */
+    @media (max-width: 900px) {
+      .hud { 
+        display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden;
+        background: transparent; pointer-events: auto;
+      }
+      .panel-left, .panel-right { display: contents; } /* Break out children */
+      
+      /* Viewport window allowing interaction with the fixed 3D canvas beneath */
+      .mobile-canvas-window {
+        display: block; order: 3; height: 40vh; width: 100%;
+        pointer-events: none; flex-shrink: 0;
+      }
+
+      /* Hide sections on mobile when sidebar is toggled off */
+      .hud.sidebar-closed .panel-left > .section,
+      .hud.sidebar-closed .panel-left > .footer-bar {
+         display: none !important;
+      }
+
+      /* Base styling overrides for all sections on mobile */
+      .section, .threat-module, .footer-bar, .panel-bottom {
+        background: var(--surface-solid) !important; 
+        backdrop-filter: blur(16px) !important;
+        border-right: none !important;
+        border-left: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding: 24px 20px !important;
+        border-bottom: 1px solid var(--panel-border) !important;
+      }
+      
+      /* Explicit Mobile Ordering */
+      .topbar { order: 1; position: sticky; top: 0; z-index: 20; background: var(--surface-solid); backdrop-filter: blur(16px); }
+      #sec-threat-score { order: 2; padding: 20px !important; }
+      #sec-hero { order: 4; }
+      #sec-overview { order: 5; }
+      #sec-telemetry { order: 6; }
+      #sec-approaches { order: 7; }
+      #sec-distribution { order: 8; }
+      #sec-status { order: 9; }
+      .footer-bar { order: 10; }
+      .panel-bottom { order: 11; justify-content: center; }
+      
+      .nav-links { display: none; }
+      .table-wrapper { max-height: 250px; } /* Slightly shorter on mobile */
+      .approach-table th { background: var(--surface-solid); } /* Match mobile bg */
+    }
+    
+    /* Small Phone Scaling */
+    @media (max-width: 600px) {
+      .tm-score { font-size: 36px; }
+      .ov-val { font-size: 20px; }
+      .hero h2 { font-size: 26px; }
+      .approach-table td { font-size: 11px; }
+      .legend { flex-wrap: wrap; justify-content: center; border-radius: 12px; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 3D Environment -->
+  <div id="space" aria-hidden="true"></div>
+  
+  <!-- Aerospace Grid Overlay -->
+  <div class="grid-overlay"></div>
+  <!-- Danger Scanlines -->
+  <div class="scanlines"></div>
+  
+  <!-- Interface overlay -->
+  <main class="hud">
+    
+    <!-- Top Navigation -->
+    <header class="topbar">
+      <div style="display: flex; align-items: center;">
+        <button id="sidebar-toggle" class="icon-btn" aria-label="Toggle Sidebar" title="Toggle Intelligence Feed">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <div class="brand">
+          <h1>NEO THREAT INDEX</h1>
+          <span>Live Telemetry</span>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a href="#" class="active" data-target="sec-hero">OVERVIEW</a>
+        <a href="#" data-target="sec-approaches">DATABASE</a>
+        <a href="#" data-target="sec-status">SYSTEM</a>
+      </nav>
+      <div class="system" style="font-family: var(--mono); color: var(--muted); font-size: 11px;">
+        <span id="global-clock">00:00:00 UTC</span>
+      </div>
+    </header>
+
+    <!-- Transparent Window for mobile 3D Interaction -->
+    <div class="mobile-canvas-window"></div>
+
+    <!-- Left Intelligence Feed -->
+    <aside class="panel-left">
+      
+      <div class="section hero" id="sec-hero">
+        <h2>Orbital<br>Intelligence</h2>
+        <p>Real-time monitoring of Near-Earth Objects (NEOs). Data processed via automated telemetry pipelines and threat assessment models.</p>
+      </div>
+      
+      <div class="section" id="sec-overview">
+        <h3 class="section-header">Threat Overview</h3>
+        <div class="overview-grid">
+          <div class="ov-card">
+            <span class="ov-label">Tracked Objects</span>
+            <span class="ov-val" id="ov-tracked">--</span>
+          </div>
+          <div class="ov-card">
+            <span class="ov-label">Close Approaches</span>
+            <span class="ov-val" id="ov-approaches">--</span>
+          </div>
+          <div class="ov-card">
+            <span class="ov-label">Elevated Risk</span>
+            <span class="ov-val accent" id="ov-risk">--</span>
+          </div>
+          <div class="ov-card">
+            <span class="ov-label">Next Approach</span>
+            <span class="ov-val" id="ov-next">--</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="section" id="sec-distribution">
+        <h3 class="section-header">Threat Distribution</h3>
+        <div id="dist-container">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+      
+      <div class="section" id="sec-approaches">
+        <h3 class="section-header">Upcoming Close Approaches</h3>
+        <div class="table-wrapper">
+          <table class="approach-table">
+            <thead>
+              <tr>
+                <th>Object</th>
+                <th>Size</th>
+                <th class="td-time">Approach</th>
+              </tr>
+            </thead>
+            <tbody id="approach-list">
+              <!-- Filled by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="section" id="sec-status">
+        <h3 class="section-header">System & Data Status</h3>
+        <ul class="diag-list">
+          <li>
+            <span class="diag-lbl"><span id="sys-feed-dot" class="dot live"></span> Data Feed</span>
+            <span class="diag-val" id="sys-feed-txt">ONLINE</span>
+          </li>
+          <li>
+            <span class="diag-lbl"><span class="dot live"></span> Source</span>
+            <span class="diag-val" id="sys-source">n8n Pipeline</span>
+          </li>
+          <li>
+            <span class="diag-lbl"><span class="dot live"></span> Last Sync</span>
+            <span class="diag-val" id="sys-sync">--</span>
+          </li>
+          <li>
+            <span class="diag-lbl"><span class="dot live"></span> Render Engine</span>
+            <span class="diag-val" id="sys-fps">60 FPS</span>
+          </li>
+        </ul>
+      </div>
+      
+      <div class="footer-bar">
+        <span>V2.1.0 OPERATIONAL</span>
+        <span>NO EXPOSED SECRETS</span>
+      </div>
+      
+    </aside>
+
+    <!-- Right Panel: Telemetry & Threat Score -->
+    <aside class="panel-right">
+      
+      <!-- Split into two modules for independent mobile sorting -->
+      <div class="threat-module" id="sec-threat-score">
+        <div class="tm-header" style="margin: 0;">
+          <h3 class="tm-title">Threat Index</h3>
+          <div class="tm-score-container">
+            <div class="tm-score" id="ts-score">--</div>
+            <div class="tm-class" id="ts-class" style="color: var(--muted);">ANALYZING</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="threat-module" id="sec-telemetry">
+        <div class="tel-selector">
+          <select id="tel-select" aria-label="Select Tracked Object">
+            <option value="-1">-- SELECT OBJECT --</option>
+          </select>
+          <div class="tel-selector-arrow">▼</div>
+        </div>
+        
+        <div class="tel-grid">
+          <div class="tel-cell">
+            <div class="tel-lbl">Est. Diameter</div>
+            <div class="tel-val" id="tel-dia">--</div>
+          </div>
+          <div class="tel-cell">
+            <div class="tel-lbl">Velocity</div>
+            <div class="tel-val" id="tel-vel">--</div>
+          </div>
+          <div class="tel-cell">
+            <div class="tel-lbl">Miss Distance</div>
+            <div class="tel-val" id="tel-dist">--</div>
+          </div>
+          <div class="tel-cell">
+            <div class="tel-lbl">T-Minus</div>
+            <div class="tel-val" id="tel-time">--</div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 24px;">
+          <h3 class="tel-lbl" style="margin-bottom: 8px;">AI Assessment</h3>
+          <p id="tel-assess" style="font-size: 12px; color: var(--muted); line-height: 1.6; margin: 0;">Awaiting selection...</p>
+        </div>
+      </div>
+      
+    </aside>
+
+    <!-- Bottom Legend -->
+    <div class="panel-bottom">
+      <div class="legend">
+        <div class="leg-item"><div class="leg-dot" style="background: #ffffff;"></div> Earth</div>
+        <div class="leg-item"><div class="leg-dot" style="background: var(--muted);"></div> Tracked NEO</div>
+        <div class="leg-item"><div class="leg-dot" style="background: var(--accent); box-shadow: 0 0 8px var(--accent);"></div> Selected</div>
+        <div class="leg-item"><div class="leg-line" style="border-top: 1px dashed var(--muted);"></div> Orbit Path</div>
+      </div>
+    </div>
+    
+  </main>
+
+  <!-- Sync overlay -->
+  <div id="boot" class="boot-overlay">
+    <div class="term-line">NEO_THREAT_INDEX v2.1.0</div>
+    <div class="term-line">ESTABLISHING UPLINK... OK</div>
+    <div class="term-line">INITIALIZING WEBGL ORBIT ENGINE... OK</div>
+    <div class="term-line active" id="boot-status">SYNCING ORBITAL DATA <span class="blink">_</span></div>
+  </div>
+
+  <!-- Dynamic Markers -->
+  <div id="earthLabel" class="marker">
+    <div class="marker-title">Earth</div>
+    <div class="marker-sub">0.00 LD</div>
+  </div>
+  <div id="astLabel" class="marker" style="display:none;">
+    <div class="marker-title" id="astLabelName">OBJ</div>
+    <div class="marker-sub" id="astLabelSub">T-MINUS</div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+    /* ==========================================================================
+       CONFIGURATION & CONSTANTS
+       ========================================================================== */
+    const FEED_URL = "https://raw.githubusercontent.com/Umxr357/space_dashboard/main/daily-asteroids.json";
+    const REFRESH_INTERVAL_MS = 5 * 60 * 1000; 
+    const STALE_THRESHOLD_MS = 15 * 60 * 1000;
+    
+    const COLORS = {
+      low: 0x00ff88,
+      watch: 0xffd700,
+      elevated: 0xff8800,
+      critical: 0xff3366,
+      accent: 0x00ffff,
+      muted: 0x555555
+    };
+
+    /* ==========================================================================
+       APPLICATION STATE
+       ========================================================================== */
+    const state = {
+      asteroids: [],
+      selectedIndex: -1,
+      hoveredIndex: -1,
+      feedStatus: "loading",
+      lastFetchedAt: null,
+      lastDataHash: null
+    };
+
+    const sceneState = {
+      scene: null, camera: null, renderer: null, controls: null,
+      raycaster: null, pointer: null,
+      earth: null, atmosphere: null, stars: null,
+      asteroidMeshes: [],
+      paused: false,
+      initialized: false
+    };
+
+    /* ==========================================================================
+       UTILITIES
+       ========================================================================== */
+    const $ = id => document.getElementById(id);
+    
+    function simpleHash(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+      }
+      return hash;
+    }
+
+    const formatDist = val => val >= 1e6 
+      ? `<span class="val">${(val/1e6).toFixed(2)}</span><span class="unit">M km</span>`
+      : `<span class="val">${Math.round(val).toLocaleString()}</span><span class="unit">km</span>`;
+
+    const formatVel = val => `<span class="val">${Math.round(val).toLocaleString()}</span><span class="unit">km/h</span>`;
+    const formatDia = val => `<span class="val">${Math.round(val)}</span><span class="unit">m</span>`;
+
+    /* ==========================================================================
+       DATA PROCESSING
+       ========================================================================== */
+    function processAsteroid(raw, index) {
+      try {
+        const dia = raw.diameter_meters ?? raw.diameter_m ?? raw.diameter ?? 50;
+        const vel = raw.velocity_kmh ?? raw.velocity_km_h ?? raw.velocity ?? 30000;
+        const dist = raw.miss_distance_km ?? raw.miss_distance ?? 5000000;
+        
+        // Comprehensive check for hazardous flags
+        const haz = raw.hazardous === true || 
+                    String(raw.hazardous).toLowerCase() === "true" || 
+                    raw.is_potentially_hazardous_asteroid === true || 
+                    String(raw.is_potentially_hazardous_asteroid).toLowerCase() === "true";
+        
+        // Calculate estimated Time to Approach (hours) based on distance & velocity
+        const ttaHours = vel > 0 ? dist / vel : 9999;
+        let approachStr = "Transiting";
+        if (ttaHours < 24) approachStr = Math.round(ttaHours) + "h";
+        else if (ttaHours < 24 * 30) approachStr = Math.round(ttaHours / 24) + "d";
+
+        // Calculate a stable Synthetic Threat Score (0.0 - 10.0)
+        let score = 0;
+        if (haz) score += 5.0;
+        score += Math.min((dia / 1000) * 3, 3); // Size factor
+        score += Math.min(dist > 0 ? (1000000 / dist) * 2 : 0, 2); // Proximity factor
+        const finalScore = Math.min(Math.max(score, 0), 10);
+        
+        let cat = "LOW";
+        if (finalScore >= 8) cat = "CRITICAL";
+        else if (finalScore >= 6) cat = "ELEVATED";
+        else if (finalScore >= 3) cat = "WATCH";
+
+        return {
+          id: index,
+          name: (raw.name || raw.designation || `NEO-${String(index+1).padStart(3,"0")}`).substring(0, 20),
+          diameter: dia,
+          velocity: vel,
+          distance: dist,
+          hazardous: haz,
+          assessment: raw.assessment || raw.ai_assessment || raw.summary || "Standard orbital transit.",
+          approachStr: approachStr,
+          threatScore: finalScore,
+          threatCategory: cat
+        };
+      } catch (e) { return null; }
+    }
+
+    /* ==========================================================================
+       DATA FETCHING
+       ========================================================================== */
+    async function fetchFeed() {
+      try {
+        const url = `${FEED_URL}?t=${Date.now()}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12000);
+        
+        const res = await fetch(url, { signal: controller.signal, cache: "no-store" });
+        clearTimeout(timeout);
+        
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const rawText = await res.text();
+        
+        const hash = simpleHash(rawText);
+        if (hash === state.lastDataHash) {
+          state.lastFetchedAt = new Date();
+          updateSystemStatus("ONLINE");
+          return false;
+        }
+
+        let data = JSON.parse(rawText);
+        let arr = Array.isArray(data) ? data : (data.asteroids || data.near_earth_objects || Object.values(data).find(Array.isArray) || []);
+        
+        const processed = arr.map((a, i) => processAsteroid(a, i)).filter(a => a !== null);
+        if (processed.length === 0) throw new Error("Empty Feed");
+
+        state.asteroids = processed;
+        state.lastDataHash = hash;
+        state.lastFetchedAt = new Date();
+        state.feedStatus = "live";
+        
+        updateSystemStatus("ONLINE");
+        return true;
+      } catch (err) {
+        state.feedStatus = err.name === "AbortError" ? "timeout" : "error";
+        updateSystemStatus("ERROR");
+        return false;
+      }
+    }
+
+    /* ==========================================================================
+       DOM UPDATES & NAVIGATION
+       ========================================================================== */
+    // Sidebar Toggle
+    $("sidebar-toggle").addEventListener("click", () => {
+      document.querySelector(".hud").classList.toggle("sidebar-closed");
+    });
+
+    // Setup Navigation Links for smooth scrolling and visual feedback
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = link.getAttribute('data-target');
+        const targetEl = $(targetId);
+        
+        if (targetEl) {
+          // If sidebar is closed, open it when a navigation link is clicked
+          document.querySelector(".hud").classList.remove("sidebar-closed");
+          
+          // Robust scrolling targeting the correct scroll container
+          const isMobile = window.innerWidth <= 900;
+          const scrollContainer = isMobile ? document.querySelector('.hud') : document.querySelector('.panel-left');
+          
+          if (scrollContainer && !isMobile) {
+            scrollContainer.scrollTo({
+              top: targetEl.offsetTop,
+              behavior: 'smooth'
+            });
+          } else {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+
+          // Visual Feedback Pulse
+          targetEl.classList.remove('pulse-target');
+          void targetEl.offsetWidth; // trigger reflow to restart animation
+          targetEl.classList.add('pulse-target');
+          
+          document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+          link.classList.add('active');
+        }
+      });
+    });
+
+    function updateSystemStatus(statusStr) {
+      const isOk = statusStr === "ONLINE";
+      $("sys-feed-txt").innerText = statusStr;
+      $("sys-feed-dot").className = `dot ${isOk ? 'live' : 'error'}`;
+      
+      if (state.lastFetchedAt) {
+        const d = state.lastFetchedAt;
+        $("sys-sync").innerText = `${String(d.getUTCHours()).padStart(2,"0")}:${String(d.getUTCMinutes()).padStart(2,"0")} UTC`;
+      }
+    }
+
+    function buildUI() {
+      if (state.asteroids.length === 0) return;
+      
+      // 1. Overview Grid
+      $("ov-tracked").innerText = state.asteroids.length;
+      
+      const upcoming = state.asteroids.filter(a => a.approachStr !== "Transiting");
+      $("ov-approaches").innerText = upcoming.length;
+      
+      const elevated = state.asteroids.filter(a => a.threatCategory === "ELEVATED" || a.threatCategory === "CRITICAL");
+      $("ov-risk").innerText = elevated.length;
+      $("ov-risk").className = `ov-val ${elevated.length > 0 ? 'accent' : ''}`;
+      
+      const closest = state.asteroids.reduce((p, c) => c.distance < p.distance ? c : p);
+      $("ov-next").innerText = closest.approachStr;
+
+      // 2. Threat Distribution
+      const dist = { LOW: 0, WATCH: 0, ELEVATED: 0, CRITICAL: 0 };
+      state.asteroids.forEach(a => dist[a.threatCategory]++);
+      const total = state.asteroids.length;
+      
+      let distHTML = '';
+      ['CRITICAL', 'ELEVATED', 'WATCH', 'LOW'].forEach(cat => {
+        if (dist[cat] > 0 || cat === 'CRITICAL' || cat === 'ELEVATED') {
+          const pct = Math.round((dist[cat] / total) * 100);
+          const colorVar = `var(--${cat.toLowerCase()})`;
+          distHTML += `
+            <div class="dist-row">
+              <span class="dist-lbl">${cat}</span>
+              <div class="dist-bar-bg"><div class="dist-bar-fill" style="width: ${pct}%; background: ${colorVar}"></div></div>
+              <span class="dist-pct">${pct}%</span>
+            </div>`;
+        }
+      });
+      $("dist-container").innerHTML = distHTML;
+
+      // 3. Populate Telemetry Dropdown
+      let optionsHTML = '<option value="-1">-- SELECT OBJECT --</option>';
+      state.asteroids.forEach(ast => {
+        const dangerPrefix = ast.hazardous ? "⚠️ " : "";
+        optionsHTML += `<option value="${ast.id}">${dangerPrefix}[${ast.threatCategory}] ${ast.name}</option>`;
+      });
+      $("tel-select").innerHTML = optionsHTML;
+      $("tel-select").value = state.selectedIndex;
+
+      // Bind Dropdown Listener (only once)
+      if (!$("tel-select").dataset.bound) {
+        $("tel-select").addEventListener("change", (e) => {
+          selectAsteroid(parseInt(e.target.value));
+        });
+        $("tel-select").dataset.bound = "true";
+      }
+
+      // 4. Close Approach Table (Shows all objects now, wrapped in scrollable container)
+      const sorted = [...state.asteroids].sort((a,b) => a.distance - b.distance);
+      let rowsHTML = '';
+      sorted.forEach(ast => {
+        rowsHTML += `
+          <tr data-id="${ast.id}" class="${ast.id === state.selectedIndex ? 'active' : ''}">
+            <td class="td-obj">${ast.hazardous ? '<span style="color:var(--error);">⚠️</span> ' : ''}${ast.name}</td>
+            <td>${Math.round(ast.diameter)}m</td>
+            <td class="td-time">${ast.approachStr}</td>
+          </tr>`;
+      });
+      $("approach-list").innerHTML = rowsHTML;
+      
+      // Bind clicks
+      document.querySelectorAll('#approach-list tr').forEach(tr => {
+        tr.addEventListener('click', () => {
+          selectAsteroid(parseInt(tr.getAttribute('data-id')));
+          // On mobile, scroll down to the telemetry panel smoothly
+          if (window.innerWidth <= 900) {
+            $("sec-telemetry").scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
+        });
+      });
+    }
+
+    function selectAsteroid(index) {
+      if (index < 0 || index >= state.asteroids.length) {
+        state.selectedIndex = -1;
+        document.body.classList.remove('danger-mode');
+        if ($("tel-select")) $("tel-select").value = "-1";
+        $("ts-score").innerText = "--";
+        $("ts-class").innerText = "AWAITING";
+        $("ts-class").style.color = "var(--muted)";
+        $("tel-dia").innerHTML = "--";
+        $("tel-vel").innerHTML = "--";
+        $("tel-dist").innerHTML = "--";
+        $("tel-time").innerHTML = "--";
+        $("tel-assess").innerText = "Select an object from the feed or orbital map to view detailed telemetry.";
+        $("astLabel").style.display = "none";
+        updateThreeJSSelection();
+        return;
+      }
+
+      state.selectedIndex = index;
+      const ast = state.asteroids[index];
+      
+      // Threat UI Override for Hazardous objects
+      document.body.classList.toggle('danger-mode', ast.hazardous);
+      
+      // Update Table Highlight
+      document.querySelectorAll('#approach-list tr').forEach(tr => {
+        tr.classList.toggle('active', parseInt(tr.getAttribute('data-id')) === index);
+      });
+
+      // Update Telemetry
+      if ($("tel-select")) $("tel-select").value = index;
+      $("tel-dia").innerHTML = formatDia(ast.diameter);
+      $("tel-vel").innerHTML = formatVel(ast.velocity);
+      $("tel-dist").innerHTML = formatDist(ast.distance);
+      $("tel-time").innerHTML = `<span class="val">${ast.approachStr}</span>`;
+      $("tel-assess").innerText = ast.assessment;
+
+      // Update Threat Score
+      $("ts-score").innerText = ast.threatScore.toFixed(1).padStart(4, "0");
+      $("ts-class").innerText = ast.hazardous ? "HAZARDOUS" : ast.threatCategory;
+      if (!ast.hazardous) {
+        $("ts-class").style.color = `var(--${ast.threatCategory.toLowerCase()})`;
+      }
+
+      // Update 3D Selection
+      updateThreeJSSelection();
+    }
+
+    /* ==========================================================================
+       THREE.JS ENGINE
+       ========================================================================== */
+    function initThreeJS() {
+      sceneState.scene = new THREE.Scene();
+      
+      sceneState.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+      sceneState.camera.position.set(20, 15, 30);
+      
+      sceneState.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      sceneState.renderer.setSize(window.innerWidth, window.innerHeight);
+      sceneState.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      $("space").appendChild(sceneState.renderer.domElement);
+      
+      sceneState.controls = new OrbitControls(sceneState.camera, sceneState.renderer.domElement);
+      sceneState.controls.enableDamping = true;
+      sceneState.controls.dampingFactor = 0.05;
+      sceneState.controls.minDistance = 8;
+      sceneState.controls.maxDistance = 150;
+      sceneState.controls.maxPolarAngle = Math.PI - 0.1; 
+      
+      // Earth
+      const earthGeo = new THREE.SphereGeometry(4, 64, 64);
+      const earthMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.03, transparent: true, opacity: 0.4 });
+      sceneState.earth = new THREE.Points(earthGeo, earthMat);
+      sceneState.scene.add(sceneState.earth);
+      
+      // Atmosphere Glow
+      const atmoGeo = new THREE.SphereGeometry(4.2, 32, 32);
+      const atmoMat = new THREE.MeshBasicMaterial({ color: 0x2266ff, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending, side: THREE.BackSide });
+      sceneState.atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
+      sceneState.scene.add(sceneState.atmosphere);
+
+      // Starfield
+      const starGeo = new THREE.BufferGeometry();
+      const starPos = [];
+      for (let i = 0; i < 2000; i++) {
+        starPos.push((Math.random() - 0.5) * 300, (Math.random() - 0.5) * 300, (Math.random() - 0.5) * 300);
+      }
+      starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starPos, 3));
+      const starMat = new THREE.PointsMaterial({ color: 0x444444, size: 0.1 });
+      sceneState.stars = new THREE.Points(starGeo, starMat);
+      sceneState.scene.add(sceneState.stars);
+
+      buildThreeJSAsteroids();
+
+      // Interaction
+      sceneState.raycaster = new THREE.Raycaster();
+      sceneState.pointer = new THREE.Vector2(-2, -2);
+      
+      window.addEventListener("mousemove", (e) => {
+        sceneState.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+        sceneState.pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      });
+      
+      window.addEventListener("click", () => {
+        if (state.hoveredIndex !== -1) {
+          selectAsteroid(state.hoveredIndex);
+        }
+      });
+      
+      window.addEventListener("resize", () => {
+        sceneState.camera.aspect = window.innerWidth / window.innerHeight;
+        sceneState.camera.updateProjectionMatrix();
+        sceneState.renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // Keyboard
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") selectAsteroid(-1);
+        if (e.key === " ") { sceneState.paused = !sceneState.paused; e.preventDefault(); }
+        if (e.key === "r" || e.key === "R") {
+          sceneState.controls.target.set(0,0,0);
+          sceneState.camera.position.set(20, 15, 30);
+        }
+      });
+
+      sceneState.initialized = true;
+      animateLoop();
+    }
+
+    function buildThreeJSAsteroids() {
+      // Clear old
+      sceneState.asteroidMeshes.forEach(m => {
+        sceneState.scene.remove(m.userData.orbit);
+        sceneState.scene.remove(m);
+      });
+      sceneState.asteroidMeshes = [];
+
+      state.asteroids.forEach((ast, i) => {
+        // Orbit Radius mapping based on distance
+        const baseR = 6;
+        const distFactor = Math.max(1, Math.log10(ast.distance / 100000));
+        const r = baseR + (i * 1.5 * distFactor); 
+        
+        let color = COLORS[ast.threatCategory.toLowerCase()] || COLORS.muted;
+        if (ast.hazardous) color = COLORS.error; // Explicit red for hazardous objects on the map
+
+        // Orbit Ring
+        const curve = new THREE.EllipseCurve(0, 0, r, r, 0, 2 * Math.PI, false, 0);
+        const pts = curve.getPoints(64);
+        const oGeo = new THREE.BufferGeometry().setFromPoints(pts);
+        const oMat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.15 });
+        const orbit = new THREE.Line(oGeo, oMat);
+        orbit.rotation.x = Math.PI / 2 + (Math.random() * 0.4 - 0.2);
+        orbit.rotation.y = (Math.random() * 0.4 - 0.2);
+        sceneState.scene.add(orbit);
+
+        // Object Mesh - Increased radius to 0.4 for easier clicking
+        const aGeo = new THREE.SphereGeometry(0.4, 16, 16);
+        const aMat = new THREE.MeshBasicMaterial({ color: color });
+        const mesh = new THREE.Mesh(aGeo, aMat);
+        
+        mesh.userData = {
+          id: i,
+          radius: r,
+          angle: Math.random() * Math.PI * 2,
+          speed: (0.0005 + Math.random() * 0.0015) * (Math.random() > 0.5 ? 1 : -1),
+          orbit: orbit,
+          baseColor: color,
+          isHaz: ast.hazardous
+        };
+        
+        sceneState.scene.add(mesh);
+        sceneState.asteroidMeshes.push(mesh);
+      });
+    }
+
+    function updateThreeJSSelection() {
+      sceneState.asteroidMeshes.forEach((mesh, i) => {
+        const isSel = (i === state.selectedIndex);
+        const isHov = (i === state.hoveredIndex);
+        
+        if (isSel) {
+          mesh.material.color.setHex(mesh.userData.isHaz ? COLORS.error : COLORS.accent);
+          mesh.scale.setScalar(2.0); // reduced multiplier since base radius is now 0.4
+          mesh.userData.orbit.material.opacity = 0.8;
+          mesh.userData.orbit.material.color.setHex(mesh.userData.isHaz ? COLORS.error : COLORS.accent);
+        } else if (isHov) {
+          mesh.material.color.setHex(0xffffff);
+          mesh.scale.setScalar(1.5);
+          mesh.userData.orbit.material.opacity = 0.4;
+        } else {
+          mesh.material.color.setHex(mesh.userData.baseColor);
+          mesh.scale.setScalar(1.0);
+          mesh.userData.orbit.material.opacity = 0.15;
+          mesh.userData.orbit.material.color.setHex(mesh.userData.baseColor);
+        }
+      });
+    }
+
+    let frames = 0, lastTime = performance.now();
+    
+    function animateLoop() {
+      requestAnimationFrame(animateLoop);
+      
+      // FPS Calculation
+      frames++;
+      let now = performance.now();
+      if (now - lastTime >= 1000) {
+        $("sys-fps").innerText = Math.round((frames * 1000) / (now - lastTime)) + " FPS";
+        frames = 0; lastTime = now;
+      }
+
+      if (!sceneState.paused) {
+        sceneState.earth.rotation.y += 0.0005;
+        sceneState.atmosphere.rotation.y += 0.0006;
+        sceneState.stars.rotation.y -= 0.0001;
+        
+        sceneState.asteroidMeshes.forEach(mesh => {
+          mesh.userData.angle += mesh.userData.speed;
+          const r = mesh.userData.radius;
+          const x = Math.cos(mesh.userData.angle) * r;
+          const z = Math.sin(mesh.userData.angle) * r;
+          const vec = new THREE.Vector3(x, 0, z);
+          vec.applyEuler(mesh.userData.orbit.rotation);
+          mesh.position.copy(vec);
+        });
+      }
+
+      // Raycasting for Hover
+      sceneState.raycaster.setFromCamera(sceneState.pointer, sceneState.camera);
+      const intersects = sceneState.raycaster.intersectObjects(sceneState.asteroidMeshes);
+      
+      let newHover = -1;
+      if (intersects.length > 0) {
+        newHover = intersects[0].object.userData.id;
+        $("space").style.cursor = "pointer";
+      } else {
+        $("space").style.cursor = "grab";
+      }
+      
+      if (newHover !== state.hoveredIndex) {
+        state.hoveredIndex = newHover;
+        updateThreeJSSelection();
+      }
+
+      // Camera Lerp to Selection
+      if (state.selectedIndex !== -1 && sceneState.controls) {
+        const targetMesh = sceneState.asteroidMeshes[state.selectedIndex];
+        sceneState.controls.target.lerp(targetMesh.position, 0.05);
+      } else {
+        sceneState.controls.target.lerp(new THREE.Vector3(0,0,0), 0.05);
+      }
+      
+      sceneState.controls.update();
+
+      // Update 2D DOM Markers
+      if (sceneState.camera) {
+        // Earth
+        const ePos = new THREE.Vector3(0, 4.5, 0).project(sceneState.camera);
+        if (ePos.z < 1) {
+          $("earthLabel").style.transform = `translate(${(ePos.x * 0.5 + 0.5) * window.innerWidth}px, ${(ePos.y * -0.5 + 0.5) * window.innerHeight}px)`;
+        }
+        
+        // Selected Asteroid Label
+        if (state.selectedIndex !== -1) {
+          const ast = state.asteroids[state.selectedIndex];
+          const mesh = sceneState.asteroidMeshes[state.selectedIndex];
+          const aPos = mesh.position.clone().project(sceneState.camera);
+          
+          if (aPos.z < 1) {
+            $("astLabel").style.display = "block";
+            $("astLabel").style.transform = `translate(${(aPos.x * 0.5 + 0.5) * window.innerWidth + 20}px, ${(aPos.y * -0.5 + 0.5) * window.innerHeight - 20}px)`;
+            $("astLabelName").innerText = ast.name;
+            $("astLabelSub").innerText = ast.approachStr;
+            $("astLabelName").style.color = ast.hazardous ? "var(--error)" : "var(--white)";
+          } else {
+            $("astLabel").style.display = "none";
+          }
+        }
+      }
+
+      sceneState.renderer.render(sceneState.scene, sceneState.camera);
+    }
+
+    /* ==========================================================================
+       INITIALIZATION
+       ========================================================================== */
+    async function boot() {
+      $("boot-status").innerHTML = "SYNCING ORBITAL DATA <span class='blink'>[████████░░░░]</span>";
+      
+      const hasData = await fetchFeed();
+      
+      if (hasData) {
+        $("boot-status").innerHTML = "DATA ACQUIRED <span class='blink'>_</span>";
+        setTimeout(() => {
+          $("boot").classList.add("hidden");
+          buildUI();
+          initThreeJS();
+          if(state.asteroids.length > 0) selectAsteroid(0);
+        }, 800);
+      } else {
+        $("boot-status").innerHTML = "NO DATA AVAILABLE. AWAITING FEED <span class='blink'>_</span>";
+        setTimeout(() => {
+          $("boot").classList.add("hidden");
+          initThreeJS();
+        }, 1500);
+      }
+
+      setInterval(() => {
+        $("global-clock").innerText = new Date().toISOString().substring(11, 19) + " UTC";
+      }, 1000);
+
+      setInterval(async () => {
+        const changed = await fetchFeed();
+        if (changed) {
+          buildUI();
+          buildThreeJSAsteroids();
+          selectAsteroid(state.selectedIndex);
+        }
+      }, REFRESH_INTERVAL_MS);
+    }
+
+    boot();
+
+  </script>
+</body>
+</html>
