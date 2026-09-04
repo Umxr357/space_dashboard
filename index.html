@@ -258,12 +258,14 @@
     .tm-class { font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 8px; transition: color 0.3s; }
 
     /* The central stage preserves an unobstructed orbital focal point. */
-    .stage-readout { position:relative; grid-column:2; grid-row:2; align-self:start; justify-self:center; margin-top:28px; min-width:250px; padding:12px 15px; pointer-events:none; text-align:center; border:1px solid rgba(130,255,255,.14); background:linear-gradient(180deg,rgba(4,14,19,.74),rgba(3,8,12,.31)); backdrop-filter:blur(12px); box-shadow:0 16px 46px rgba(0,0,0,.16); }
-    .stage-readout::before { content:""; position:absolute; top:0; left:50%; width:44px; height:1px; transform:translateX(-50%); background:var(--accent); box-shadow:0 0 14px var(--accent); }
+    .stage-readout { --stage-accent:var(--accent); position:relative; grid-column:2; grid-row:2; align-self:start; justify-self:center; margin-top:28px; min-width:250px; padding:12px 15px; pointer-events:none; text-align:center; border:1px solid rgba(130,255,255,.14); background:linear-gradient(180deg,rgba(4,14,19,.74),rgba(3,8,12,.31)); backdrop-filter:blur(12px); box-shadow:0 16px 46px rgba(0,0,0,.16); }
+    .stage-readout::before { content:""; position:absolute; top:0; left:50%; width:44px; height:1px; transform:translateX(-50%); background:var(--stage-accent); box-shadow:0 0 14px var(--stage-accent); }
+    .stage-readout.selected { animation:stagePulse .65s cubic-bezier(.2,.8,.2,1); }
+    @keyframes stagePulse { 0% { transform:translateY(-4px); border-color:var(--stage-accent); box-shadow:0 0 0 rgba(0,255,255,0); } 55% { transform:translateY(0); border-color:var(--stage-accent); box-shadow:0 0 34px rgba(0,255,255,.18); } 100% { border-color:rgba(130,255,255,.14); box-shadow:0 16px 46px rgba(0,0,0,.16); } }
     .stage-eyebrow { color:#78a4a9; font:700 8px var(--mono); letter-spacing:.17em; }
     .stage-name { display:block; margin:7px 0 9px; color:var(--white); font:600 15px var(--mono); letter-spacing:-.04em; text-shadow:0 0 18px rgba(255,255,255,.12); }
     .stage-metric { display:flex; justify-content:center; align-items:center; gap:8px; color:#6f8b90; font:600 8px var(--mono); letter-spacing:.12em; }
-    .stage-metric strong { color:var(--accent); font-size:10px; letter-spacing:-.03em; }
+    .stage-metric strong { color:var(--stage-accent); font-size:10px; letter-spacing:-.03em; }
     
     /* Telemetry Grid & Selector */
     .tel-selector { position: relative; margin: 0 0 20px 0; }
@@ -303,6 +305,10 @@
     /* Floating Labels (Three.js synced) */
     .marker { position: fixed; top: 0; left: 0; z-index: 5; pointer-events: none; color: var(--white); text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
     .marker-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border-bottom:1px solid rgba(0,255,255,.5); padding:5px 7px 4px; background:rgba(2,12,16,.8); box-shadow:0 0 18px rgba(0,255,255,.1); }
+    #astLabel .marker-title { position:relative; border-left:1px solid var(--accent); }
+    #astLabel .marker-title::before, #astLabel .marker-title::after { content:""; position:absolute; left:-7px; width:6px; height:6px; border-left:1px solid var(--accent); }
+    #astLabel .marker-title::before { top:-1px; border-top:1px solid var(--accent); }
+    #astLabel .marker-title::after { bottom:-1px; border-bottom:1px solid var(--accent); }
     .marker-sub { font-family: var(--mono); font-size: 9px; color: var(--muted); margin-top: 4px; display: block; }
     
     /* Boot Sequence / Loader */
@@ -372,7 +378,7 @@
       .topbar { order: 1; position: sticky; top: 0; z-index: 20; background: var(--surface-solid); backdrop-filter: blur(16px); }
       #sec-threat-score { order: 2; padding: 20px !important; }
       #sec-hero { order: 4; }
-      #sec-approaches { order: 5; }
+      .panel-left #sec-approaches { order: 5; }
       #sec-overview { order: 6; }
       #sec-telemetry { order: 7; }
       #sec-distribution { order: 8; }
@@ -381,8 +387,13 @@
       .panel-bottom { order: 11; justify-content: center; }
       
       .nav-links { display: none; }
-      .stage-readout { display:none; }
+      .stage-readout { display:block; order:3; align-self:stretch; min-width:0; margin:-68px 20px 22px; padding:10px 12px; z-index:6; }
+      .stage-name { margin:5px 0 7px; font-size:13px; }
       .approach-card { padding:14px; }
+      .panel-right { margin:0; max-height:none; width:100%; }
+      .panel-right > .threat-module { display:block; flex:0 0 auto; width:100%; min-height:0; max-height:none; overflow:visible; }
+      #sec-threat-score { min-height:126px; }
+      #sec-telemetry { min-height:420px; }
     }
     
     /* Small Phone Scaling */
@@ -452,7 +463,7 @@
       <div class="section hero" id="sec-hero">
         <div class="hero-kicker"><span class="dot live"></span>EARTH ORBIT / NEO OPERATIONS</div>
         <h2>Orbital<br><span>Intelligence</span></h2>
-        <p>Periodically refreshed Near-Earth Object intelligence. NASA telemetry is validated, normalized and classified by an n8n-orchestrated prototype risk heuristic.</p>
+        <p>Live NASA Near-Earth Object telemetry—validated, normalized and classified by an n8n-orchestrated prototype risk model.</p>
         <div class="hero-readout">
           <span>ORCHESTRATION PATH</span>
           <strong>NASA NEOws → n8n → MISSION DISPLAY</strong>
@@ -526,13 +537,13 @@
       </div>
       
       <div class="footer-bar">
-        <span>V3.0.0 PROTOTYPE HEURISTIC</span>
+        <span>V3.1.0 PROTOTYPE HEURISTIC</span>
         <span>NO EXPOSED SECRETS</span>
       </div>
       
     </aside>
 
-    <section class="stage-readout" aria-live="polite" aria-label="Selected close-approach summary">
+    <section class="stage-readout" id="stage-readout" aria-live="polite" aria-label="Selected close-approach summary">
       <div class="stage-eyebrow">LIVE CLOSE-APPROACH CORRIDOR</div>
       <strong class="stage-name" id="stage-name">AWAITING TELEMETRY</strong>
       <div class="stage-metric"><span>MISS DISTANCE</span><strong id="stage-distance">--</strong></div>
@@ -622,7 +633,7 @@
 
   <!-- Sync overlay -->
   <div id="boot" class="boot-overlay">
-    <div class="term-line">NEO_THREAT_INDEX v2.1.0</div>
+    <div class="term-line">NEO_THREAT_INDEX v3.1.0</div>
     <div class="term-line">ESTABLISHING UPLINK... OK</div>
     <div class="term-line">INITIALIZING WEBGL ORBIT ENGINE... OK</div>
     <div class="term-line active" id="boot-status">SYNCING ORBITAL DATA <span class="blink">_</span></div>
@@ -680,8 +691,8 @@
 
     const sceneState = {
       scene: null, camera: null, renderer: null, controls: null,
-      raycaster: null, pointer: null,
-      earth: null, atmosphere: null, stars: null,
+      raycaster: null, pointer: null, pointerDown: null, pointerDirty: false,
+      earth: null, earthCore: null, earthWire: null, atmosphere: null, stars: null, foregroundStars: null, radarRing: null,
       asteroidMeshes: [],
       paused: false,
       initialized: false
@@ -699,6 +710,7 @@
       }
       return hash;
     }
+    const seededUnit = (seed, salt = "") => (Math.abs(simpleHash(`${seed}:${salt}`)) % 10000) / 10000;
 
     const formatDist = val => val >= 1e6 
       ? `<span class="val">${(val/1e6).toFixed(2)}</span><span class="unit">M km</span>`
@@ -1002,6 +1014,10 @@
         $("tel-assess").innerText = "Select an object from the feed or orbital map to view detailed telemetry.";
         if ($("stage-name")) $("stage-name").innerText = "AWAITING TELEMETRY";
         if ($("stage-distance")) $("stage-distance").innerText = "--";
+        if ($("stage-readout")) {
+          $("stage-readout").style.removeProperty("--stage-accent");
+          $("stage-readout").classList.remove("selected");
+        }
         document.documentElement.style.setProperty("--score-angle", "0deg");
         $("astLabel").style.display = "none";
         updateThreeJSSelection();
@@ -1032,6 +1048,13 @@
       $("tel-provenance").innerHTML = `SOURCE: ${ast.source} · PROCESSED BY: ${ast.processedBy} · RISK MODEL: Prototype NEO Threat Index${ast.nasaUrl ? ` · <a href="${ast.nasaUrl}" target="_blank" rel="noopener" style="color:var(--accent)">NASA/JPL reference</a>` : ''}`;
       if ($("stage-name")) $("stage-name").innerText = ast.name;
       if ($("stage-distance")) $("stage-distance").innerText = ast.distance >= 1e6 ? `${(ast.distance / 1e6).toFixed(2)} M KM` : `${Math.round(ast.distance).toLocaleString()} KM`;
+      if ($("stage-readout")) {
+        const stageColor = ast.hazardous ? "var(--critical)" : `var(--${ast.threatCategory.toLowerCase()})`;
+        $("stage-readout").style.setProperty("--stage-accent", stageColor);
+        $("stage-readout").classList.remove("selected");
+        void $("stage-readout").offsetWidth;
+        $("stage-readout").classList.add("selected");
+      }
 
       // Update Threat Score
       $("ts-score").innerText = `${Math.round(ast.threatScore)}/100`;
@@ -1064,17 +1087,41 @@
       sceneState.controls.maxDistance = 150;
       sceneState.controls.maxPolarAngle = Math.PI - 0.1; 
       
-      // Earth
+      // Earth: a layered, texture-free focal object that remains legible behind the HUD.
+      sceneState.scene.add(new THREE.AmbientLight(0x102d50, 1.15));
+      const keyLight = new THREE.DirectionalLight(0x9bdfff, 2.4);
+      keyLight.position.set(14, 10, 18);
+      sceneState.scene.add(keyLight);
+      const rimLight = new THREE.PointLight(0x006dff, 1.8, 55);
+      rimLight.position.set(-14, 6, -10);
+      sceneState.scene.add(rimLight);
+
+      const earthCoreGeo = new THREE.SphereGeometry(3.94, 64, 64);
+      const earthCoreMat = new THREE.MeshPhongMaterial({ color: 0x06244d, emissive: 0x001225, emissiveIntensity: 0.75, shininess: 54, transparent: true, opacity: 0.96 });
+      sceneState.earthCore = new THREE.Mesh(earthCoreGeo, earthCoreMat);
+      sceneState.scene.add(sceneState.earthCore);
+
       const earthGeo = new THREE.SphereGeometry(4, 64, 64);
-      const earthMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.03, transparent: true, opacity: 0.4 });
+      const earthMat = new THREE.PointsMaterial({ color: 0xa5efff, size: 0.026, transparent: true, opacity: 0.5, depthWrite: false });
       sceneState.earth = new THREE.Points(earthGeo, earthMat);
       sceneState.scene.add(sceneState.earth);
+
+      const earthWireGeo = new THREE.SphereGeometry(4.08, 24, 16);
+      const earthWireMat = new THREE.MeshBasicMaterial({ color: 0x1d9eff, wireframe: true, transparent: true, opacity: 0.11, blending: THREE.AdditiveBlending, depthWrite: false });
+      sceneState.earthWire = new THREE.Mesh(earthWireGeo, earthWireMat);
+      sceneState.scene.add(sceneState.earthWire);
       
-      // Atmosphere Glow
-      const atmoGeo = new THREE.SphereGeometry(4.2, 32, 32);
-      const atmoMat = new THREE.MeshBasicMaterial({ color: 0x2266ff, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending, side: THREE.BackSide });
+      // Atmosphere glow + operational radar arc
+      const atmoGeo = new THREE.SphereGeometry(4.33, 32, 32);
+      const atmoMat = new THREE.MeshBasicMaterial({ color: 0x00b7ff, transparent: true, opacity: 0.11, blending: THREE.AdditiveBlending, side: THREE.BackSide, depthWrite: false });
       sceneState.atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
       sceneState.scene.add(sceneState.atmosphere);
+      const radarGeo = new THREE.RingGeometry(6.6, 6.64, 96, 1, 0, Math.PI * 1.58);
+      const radarMat = new THREE.MeshBasicMaterial({ color: 0x00d9ff, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+      sceneState.radarRing = new THREE.Mesh(radarGeo, radarMat);
+      sceneState.radarRing.rotation.x = Math.PI / 2;
+      sceneState.radarRing.rotation.z = -0.55;
+      sceneState.scene.add(sceneState.radarRing);
 
       // Starfield
       const starGeo = new THREE.BufferGeometry();
@@ -1083,25 +1130,47 @@
         starPos.push((Math.random() - 0.5) * 300, (Math.random() - 0.5) * 300, (Math.random() - 0.5) * 300);
       }
       starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starPos, 3));
-      const starMat = new THREE.PointsMaterial({ color: 0x444444, size: 0.1 });
+      const starMat = new THREE.PointsMaterial({ color: 0x71808c, size: 0.07, transparent: true, opacity: 0.58, depthWrite: false });
       sceneState.stars = new THREE.Points(starGeo, starMat);
       sceneState.scene.add(sceneState.stars);
+
+      const foregroundStarGeo = new THREE.BufferGeometry();
+      const foregroundStarPos = [];
+      for (let i = 0; i < 300; i++) {
+        foregroundStarPos.push((Math.random() - 0.5) * 125, (Math.random() - 0.5) * 125, (Math.random() - 0.5) * 125);
+      }
+      foregroundStarGeo.setAttribute("position", new THREE.Float32BufferAttribute(foregroundStarPos, 3));
+      const foregroundStarMat = new THREE.PointsMaterial({ color: 0x218fa4, size: 0.13, transparent: true, opacity: 0.48, depthWrite: false });
+      sceneState.foregroundStars = new THREE.Points(foregroundStarGeo, foregroundStarMat);
+      sceneState.scene.add(sceneState.foregroundStars);
 
       buildThreeJSAsteroids();
 
       // Interaction
       sceneState.raycaster = new THREE.Raycaster();
       sceneState.pointer = new THREE.Vector2(-2, -2);
-      
-      window.addEventListener("mousemove", (e) => {
-        sceneState.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
-        sceneState.pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      const canvas = sceneState.renderer.domElement;
+      const updatePointer = (event) => {
+        const bounds = canvas.getBoundingClientRect();
+        sceneState.pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
+        sceneState.pointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
+        sceneState.pointerDirty = true;
+      };
+      canvas.addEventListener("pointermove", updatePointer);
+      canvas.addEventListener("pointerdown", (event) => {
+        sceneState.pointerDown = { x: event.clientX, y: event.clientY };
+        updatePointer(event);
       });
-      
-      window.addEventListener("click", () => {
-        if (state.hoveredIndex !== -1) {
-          selectAsteroid(state.hoveredIndex);
-        }
+      canvas.addEventListener("pointerup", (event) => {
+        const started = sceneState.pointerDown;
+        sceneState.pointerDown = null;
+        if (!started) return;
+        const dragDistance = Math.hypot(event.clientX - started.x, event.clientY - started.y);
+        if (dragDistance < 7 && state.hoveredIndex !== -1) selectAsteroid(state.hoveredIndex);
+      });
+      canvas.addEventListener("pointerleave", () => {
+        sceneState.pointer.set(-2, -2);
+        sceneState.pointerDirty = true;
       });
       
       window.addEventListener("resize", () => {
@@ -1142,36 +1211,58 @@
         let color = COLORS[ast.threatCategory.toLowerCase()] || COLORS.muted;
         if (ast.hazardous) color = COLORS.error; // Explicit red for hazardous objects on the map
 
-        // Flyby Line (Asteroids fly *past* Earth, they do not orbit it)
-        const pathLength = 300;
+        // Flyby corridor (interpretive visualization; not a physical orbital propagation).
+        const pathLength = 32;
         const pts = [
             new THREE.Vector3(-pathLength, 0, r),
             new THREE.Vector3(pathLength, 0, r)
         ];
         const oGeo = new THREE.BufferGeometry().setFromPoints(pts);
-        const oMat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.15 });
+        const oMat = new THREE.LineDashedMaterial({ color: color, transparent: true, opacity: 0.2, dashSize: 0.85, gapSize: 1.1, depthWrite: false });
         const orbit = new THREE.Line(oGeo, oMat);
+        orbit.computeLineDistances();
         
-        // Randomize the 3D orientation of the flyby approach vector
-        orbit.rotation.x = (Math.random() * Math.PI * 2);
-        orbit.rotation.y = (Math.random() * Math.PI * 2);
-        orbit.rotation.z = (Math.random() * Math.PI * 2);
+        // Stable, deterministic orientation keeps each object recognizable after a data refresh.
+        const visualSeed = `${ast.name}:${Math.round(ast.distance)}`;
+        orbit.rotation.x = (seededUnit(visualSeed, "x") - 0.5) * Math.PI * 1.15;
+        orbit.rotation.y = seededUnit(visualSeed, "y") * Math.PI * 2;
+        orbit.rotation.z = (seededUnit(visualSeed, "z") - 0.5) * Math.PI * 0.7;
         sceneState.scene.add(orbit);
 
-        // Object Mesh
-        const aGeo = new THREE.SphereGeometry(0.4, 16, 16);
-        const aMat = new THREE.MeshBasicMaterial({ color: color });
+        const beacon = new THREE.Mesh(
+          new THREE.SphereGeometry(0.1, 12, 12),
+          new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false })
+        );
+        beacon.position.set(0, 0, r);
+        orbit.add(beacon);
+
+        // Faceted target, halo, and reticle make selection legible without external textures.
+        const aGeo = new THREE.IcosahedronGeometry(0.34, 1);
+        const aMat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.96 });
         const mesh = new THREE.Mesh(aGeo, aMat);
+        const halo = new THREE.Sprite(new THREE.SpriteMaterial({ color: color, transparent: true, opacity: 0.24, blending: THREE.AdditiveBlending, depthWrite: false }));
+        halo.scale.set(2.4, 2.4, 1);
+        mesh.add(halo);
+        const reticle = new THREE.Mesh(
+          new THREE.RingGeometry(0.58, 0.63, 32),
+          new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })
+        );
+        reticle.rotation.z = seededUnit(visualSeed, "reticle") * Math.PI;
+        mesh.add(reticle);
         
         mesh.userData = {
           id: i,
           radius: r,
           // Progress along the trajectory path (-pathLength to pathLength)
-          progress: (Math.random() * pathLength * 2) - pathLength, 
-          // Velocity mapping: faster asteroids move visibly faster along their trajectory
-          speed: (ast.velocity / 100000) * 0.4 + 0.05, 
+          progress: (seededUnit(visualSeed, "progress") * pathLength * 2) - pathLength,
+          // Slower display motion maintains a readable close-approach corridor.
+          speed: Math.min(0.075, (ast.velocity / 1500000) + 0.014),
           pathLength: pathLength,
           orbit: orbit,
+          beacon: beacon,
+          halo: halo,
+          reticle: reticle,
+          phase: seededUnit(visualSeed, "phase") * Math.PI * 2,
           baseColor: color,
           isHaz: ast.hazardous
         };
@@ -1188,18 +1279,36 @@
         
         if (isSel) {
           mesh.material.color.setHex(mesh.userData.isHaz ? COLORS.error : COLORS.accent);
-          mesh.scale.setScalar(2.0); // reduced multiplier since base radius is now 0.4
-          mesh.userData.orbit.material.opacity = 0.8;
+          mesh.scale.setScalar(1.65);
+          mesh.userData.orbit.material.opacity = 0.9;
           mesh.userData.orbit.material.color.setHex(mesh.userData.isHaz ? COLORS.error : COLORS.accent);
+          mesh.userData.halo.material.color.setHex(mesh.userData.isHaz ? COLORS.error : COLORS.accent);
+          mesh.userData.halo.material.opacity = 0.92;
+          mesh.userData.reticle.material.color.setHex(mesh.userData.isHaz ? COLORS.error : COLORS.accent);
+          mesh.userData.reticle.material.opacity = 0.94;
+          mesh.userData.beacon.material.color.setHex(mesh.userData.isHaz ? COLORS.error : COLORS.accent);
+          mesh.userData.beacon.material.opacity = 0.94;
         } else if (isHov) {
           mesh.material.color.setHex(0xffffff);
-          mesh.scale.setScalar(1.5);
-          mesh.userData.orbit.material.opacity = 0.4;
+          mesh.scale.setScalar(1.28);
+          mesh.userData.orbit.material.opacity = 0.45;
+          mesh.userData.halo.material.color.setHex(0xffffff);
+          mesh.userData.halo.material.opacity = 0.48;
+          mesh.userData.reticle.material.color.setHex(0xffffff);
+          mesh.userData.reticle.material.opacity = 0.38;
+          mesh.userData.beacon.material.color.setHex(0xffffff);
+          mesh.userData.beacon.material.opacity = 0.52;
         } else {
           mesh.material.color.setHex(mesh.userData.baseColor);
           mesh.scale.setScalar(1.0);
-          mesh.userData.orbit.material.opacity = 0.15;
+          mesh.userData.orbit.material.opacity = 0.2;
           mesh.userData.orbit.material.color.setHex(mesh.userData.baseColor);
+          mesh.userData.halo.material.color.setHex(mesh.userData.baseColor);
+          mesh.userData.halo.material.opacity = 0.24;
+          mesh.userData.reticle.material.color.setHex(mesh.userData.baseColor);
+          mesh.userData.reticle.material.opacity = 0;
+          mesh.userData.beacon.material.color.setHex(mesh.userData.baseColor);
+          mesh.userData.beacon.material.opacity = 0.48;
         }
       });
     }
@@ -1219,8 +1328,12 @@
 
       if (!sceneState.paused) {
         sceneState.earth.rotation.y += 0.0005;
+        sceneState.earthCore.rotation.y += 0.00042;
+        sceneState.earthWire.rotation.y -= 0.00026;
         sceneState.atmosphere.rotation.y += 0.0006;
         sceneState.stars.rotation.y -= 0.0001;
+        sceneState.foregroundStars.rotation.y += 0.00016;
+        sceneState.radarRing.rotation.z += 0.00075;
         
         sceneState.asteroidMeshes.forEach(mesh => {
           mesh.userData.progress += mesh.userData.speed;
@@ -1235,33 +1348,34 @@
           const vec = new THREE.Vector3(mesh.userData.progress, 0, r);
           vec.applyEuler(mesh.userData.orbit.rotation);
           mesh.position.copy(vec);
+          mesh.rotation.x += 0.008;
+          mesh.rotation.y += 0.012;
+          mesh.userData.orbit.material.dashOffset -= mesh.userData.speed * 0.08;
+          mesh.userData.reticle.rotation.z += 0.018;
+
+          const selected = mesh.userData.id === state.selectedIndex;
+          const pulse = selected ? 1 + Math.sin(now * 0.004 + mesh.userData.phase) * 0.12 : 1;
+          mesh.userData.reticle.scale.set(pulse, pulse, 1);
+          mesh.userData.halo.scale.set(2.4 * (selected ? pulse : 1), 2.4 * (selected ? pulse : 1), 1);
         });
       }
 
-      // Raycasting for Hover
-      sceneState.raycaster.setFromCamera(sceneState.pointer, sceneState.camera);
-      const intersects = sceneState.raycaster.intersectObjects(sceneState.asteroidMeshes);
-      
-      let newHover = -1;
-      if (intersects.length > 0) {
-        newHover = intersects[0].object.userData.id;
-        $("space").style.cursor = "pointer";
-      } else {
-        $("space").style.cursor = "grab";
-      }
-      
-      if (newHover !== state.hoveredIndex) {
-        state.hoveredIndex = newHover;
-        updateThreeJSSelection();
+      // Raycast only after a pointer move; controls drags remain separate from object selection.
+      if (sceneState.pointerDirty) {
+        sceneState.pointerDirty = false;
+        sceneState.raycaster.setFromCamera(sceneState.pointer, sceneState.camera);
+        const intersects = sceneState.raycaster.intersectObjects(sceneState.asteroidMeshes);
+        let newHover = -1;
+        if (intersects.length > 0) newHover = intersects[0].object.userData.id;
+        sceneState.renderer.domElement.style.cursor = newHover === -1 ? "grab" : "crosshair";
+        if (newHover !== state.hoveredIndex) {
+          state.hoveredIndex = newHover;
+          updateThreeJSSelection();
+        }
       }
 
-      // Camera Lerp to Selection
-      if (state.selectedIndex !== -1 && sceneState.controls) {
-        const targetMesh = sceneState.asteroidMeshes[state.selectedIndex];
-        sceneState.controls.target.lerp(targetMesh.position, 0.05);
-      } else {
-        sceneState.controls.target.lerp(new THREE.Vector3(0,0,0), 0.05);
-      }
+      // Keep the camera anchored on Earth; selection is expressed by the target reticle and stage readout.
+      sceneState.controls.target.multiplyScalar(0.96);
       
       sceneState.controls.update();
 
