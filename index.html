@@ -592,9 +592,9 @@
     /* ==========================================================================
        CONFIGURATION & CONSTANTS
        ========================================================================== */
-    // GitHub Raw is CDN-cached even when a query string changes. The Contents API gives the dashboard
-    // the current committed n8n artifact while keeping the lightweight GitHub-backed prototype design.
-    const FEED_URL = "https://api.github.com/repos/Umxr357/space_dashboard/contents/daily-asteroids.json?ref=main";
+    // n8n commits the artifact to GitHub and Vercel rebuilds from that commit. Reading the deployed
+    // artifact avoids a second, independently cached GitHub Raw request in every browser session.
+    const FEED_URL = "./daily-asteroids.json";
     const REFRESH_INTERVAL_MS = 5 * 60 * 1000; 
     const STALE_THRESHOLD_MS = 26 * 60 * 60 * 1000;
     
@@ -639,11 +639,6 @@
        ========================================================================== */
     const $ = id => document.getElementById(id);
 
-    function decodeGitHubContent(content) {
-      const bytes = Uint8Array.from(atob(content.replace(/\s/g, "")), char => char.charCodeAt(0));
-      return new TextDecoder().decode(bytes);
-    }
-    
     function simpleHash(str) {
       let hash = 0;
       for (let i = 0; i < str.length; i++) {
@@ -734,10 +729,7 @@
         clearTimeout(timeout);
         
         if (!res.ok) throw new Error("HTTP " + res.status);
-        const responseBody = await res.json();
-        const rawText = responseBody.encoding === "base64" && responseBody.content
-          ? decodeGitHubContent(responseBody.content)
-          : JSON.stringify(responseBody);
+        const rawText = await res.text();
         
         const hash = simpleHash(rawText);
         if (hash === state.lastDataHash) {
