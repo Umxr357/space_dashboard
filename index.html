@@ -431,7 +431,7 @@
       </div>
       
       <div class="section" id="sec-approaches">
-        <h3 class="section-header">Upcoming Close Approaches</h3>
+        <h3 class="section-header">Today's Three Closest NASA Approaches</h3>
         <div class="table-wrapper">
           <table class="approach-table">
             <thead>
@@ -521,7 +521,7 @@
             <div class="tel-val" id="tel-dist">--</div>
           </div>
           <div class="tel-cell">
-            <div class="tel-lbl">T-Minus</div>
+            <div class="tel-lbl">Approach Time</div>
             <div class="tel-val" id="tel-time">--</div>
           </div>
         </div>
@@ -685,11 +685,8 @@
                     raw.is_potentially_hazardous_asteroid === true || 
                     String(raw.is_potentially_hazardous_asteroid).toLowerCase() === "true";
         
-        // Calculate estimated Time to Approach (hours) based on distance & velocity
-        const ttaHours = vel > 0 ? dist / vel : 9999;
-        let approachStr = "Transiting";
-        if (ttaHours < 24) approachStr = Math.round(ttaHours) + "h";
-        else if (ttaHours < 24 * 30) approachStr = Math.round(ttaHours / 24) + "d";
+        // NASA reports the actual close-approach timestamp. Do not infer it from miss distance/velocity.
+        const approachStr = raw.approach_date || raw.approach_date_full || "Scheduled approach";
 
         if (!raw.name && !raw.id && !raw.neo_reference_id) return null;
         if (!Number.isFinite(Number(dia)) || !Number.isFinite(Number(vel)) || !Number.isFinite(Number(dist)) || Number(dist) <= 0) return null;
