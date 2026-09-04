@@ -32,8 +32,10 @@
       --error: #ff3366;
       
       --low: #00ff88;
+      --moderate: #ffd700;
       --watch: #ffd700;
       --elevated: #ff8800;
+      --high: #ff3366;
       --critical: #ff3366;
 
       --sans: 'Inter', sans-serif;
@@ -374,13 +376,14 @@
         </button>
         <div class="brand">
           <h1>NEO THREAT INDEX</h1>
-          <span>Live Telemetry</span>
+          <span>Automated NEO Intelligence</span>
         </div>
       </div>
       <nav class="nav-links">
         <a href="#" class="active" data-target="sec-hero">OVERVIEW</a>
         <a href="#" data-target="sec-approaches">DATABASE</a>
         <a href="#" data-target="sec-status">SYSTEM</a>
+        <a href="#architecture" id="architecture-toggle">ARCHITECTURE</a>
       </nav>
       <div class="system" style="font-family: var(--mono); color: var(--muted); font-size: 11px;">
         <span id="global-clock">00:00:00 UTC</span>
@@ -395,7 +398,7 @@
       
       <div class="section hero" id="sec-hero">
         <h2>Orbital<br>Intelligence</h2>
-        <p>Real-time monitoring of Near-Earth Objects (NEOs). Data processed via automated telemetry pipelines and threat assessment models.</p>
+        <p>Periodically refreshed Near-Earth Object intelligence. NASA telemetry is validated, normalized and classified by an n8n-orchestrated prototype risk heuristic.</p>
       </div>
       
       <div class="section" id="sec-overview">
@@ -454,11 +457,19 @@
           </li>
           <li>
             <span class="diag-lbl"><span class="dot live"></span> Source</span>
-            <span class="diag-val" id="sys-source">n8n Pipeline</span>
+            <span class="diag-val" id="sys-source">NASA NeoWs → n8n</span>
           </li>
           <li>
             <span class="diag-lbl"><span class="dot live"></span> Last Sync</span>
             <span class="diag-val" id="sys-sync">--</span>
+          </li>
+          <li>
+            <span class="diag-lbl"><span class="dot live"></span> Data Age</span>
+            <span class="diag-val" id="sys-age">--</span>
+          </li>
+          <li>
+            <span class="diag-lbl"><span class="dot live"></span> Automation</span>
+            <span class="diag-val" id="sys-automation">n8n / 12h</span>
           </li>
           <li>
             <span class="diag-lbl"><span class="dot live"></span> Render Engine</span>
@@ -468,7 +479,7 @@
       </div>
       
       <div class="footer-bar">
-        <span>V2.1.0 OPERATIONAL</span>
+        <span>V3.0.0 PROTOTYPE HEURISTIC</span>
         <span>NO EXPOSED SECRETS</span>
       </div>
       
@@ -516,8 +527,13 @@
         </div>
         
         <div style="margin-top: 24px;">
-          <h3 class="tel-lbl" style="margin-bottom: 8px;">AI Assessment</h3>
+          <h3 class="tel-lbl" style="margin-bottom: 8px;">Automated Threat Assessment</h3>
           <p id="tel-assess" style="font-size: 12px; color: var(--muted); line-height: 1.6; margin: 0;">Awaiting selection...</p>
+        </div>
+        <div style="margin-top: 20px; border-top: 1px solid var(--line); padding-top: 16px;">
+          <h3 class="tel-lbl" style="margin-bottom: 8px;">Threat Index Factors</h3>
+          <p id="tel-factors" style="font-family: var(--mono); font-size: 10px; color: var(--muted); line-height: 1.8; margin: 0;">Select an object to inspect the deterministic factors.</p>
+          <p id="tel-provenance" style="font-size: 10px; color: var(--dim); line-height: 1.6; margin: 12px 0 0;"></p>
         </div>
       </div>
       
@@ -534,6 +550,22 @@
     </div>
     
   </main>
+
+  <div id="simulation-banner" role="status" aria-live="polite" style="display:none; position:fixed; top:72px; left:50%; transform:translateX(-50%); z-index:100; padding:10px 16px; background:rgba(255,51,102,.92); color:#fff; font:600 11px var(--mono); letter-spacing:.1em;">SIMULATION ACTIVE — NOT REAL NASA TELEMETRY <button id="simulation-exit" class="icon-btn" style="display:inline-flex; margin:0 0 0 8px; padding:2px; color:#fff;" aria-label="Exit simulation">×</button></div>
+  <div id="architecture-modal" role="dialog" aria-modal="true" aria-labelledby="architecture-title" hidden style="position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,.78); align-items:center; justify-content:center; padding:24px;">
+    <section style="max-width:620px; width:100%; border:1px solid var(--accent); background:var(--surface-solid); padding:32px; box-shadow:0 0 40px rgba(0,255,255,.1);">
+      <button id="architecture-close" class="icon-btn" style="float:right; margin:0;" aria-label="Close architecture panel">×</button>
+      <h2 id="architecture-title" style="font:500 22px var(--sans); color:var(--white); margin:0 0 12px;">System Architecture</h2>
+      <p style="font-size:13px; color:var(--muted); line-height:1.6;">n8n is the orchestration core—not a decorative integration.</p>
+      <pre style="white-space:pre-wrap; margin:24px 0; padding:16px; border:1px solid var(--line); color:var(--accent); font:11px/1.8 var(--mono);">NASA NeoWs → Validate → Normalize → Threat Index
+                ↓                 ↓
+          n8n Scheduler → Risk Router → Normal / Alert
+                ↓
+      GitHub JSON → Dashboard</pre>
+      <p style="font-size:11px; color:var(--dim); line-height:1.6; margin:0;">The 3D flybys are interpretive visualizations of relative telemetry, not orbital propagation. The threat score is a prototype heuristic, not an official NASA risk score.</p>
+      <button id="simulation-start" style="margin-top:20px; background:transparent; color:var(--error); border:1px solid var(--error); padding:10px 12px; font:600 10px var(--mono); letter-spacing:.08em; cursor:pointer;">SIMULATE THREAT EVENT</button>
+    </section>
+  </div>
 
   <!-- Sync overlay -->
   <div id="boot" class="boot-overlay">
@@ -562,12 +594,14 @@
        ========================================================================== */
     const FEED_URL = "https://raw.githubusercontent.com/Umxr357/space_dashboard/main/daily-asteroids.json";
     const REFRESH_INTERVAL_MS = 5 * 60 * 1000; 
-    const STALE_THRESHOLD_MS = 15 * 60 * 1000;
+    const STALE_THRESHOLD_MS = 26 * 60 * 60 * 1000;
     
     const COLORS = {
       low: 0x00ff88,
+      moderate: 0xffd700,
       watch: 0xffd700,
       elevated: 0xff8800,
+      high: 0xff3366,
       critical: 0xff3366,
       accent: 0x00ffff,
       muted: 0x555555
@@ -582,7 +616,11 @@
       hoveredIndex: -1,
       feedStatus: "loading",
       lastFetchedAt: null,
-      lastDataHash: null
+      lastDataHash: null,
+      feedGeneratedAt: null,
+      metadata: {},
+      liveAsteroids: [],
+      simulationActive: false
     };
 
     const sceneState = {
@@ -617,6 +655,22 @@
     /* ==========================================================================
        DATA PROCESSING
        ========================================================================== */
+    // Prototype heuristic: a transparent prioritisation aid, never an official NASA risk model.
+    function calculateThreatIndex({ hazardous, diameter, velocity, distance }) {
+      const lunarDistances = distance / 384400;
+      const hazardousPoints = hazardous ? 25 : 0;
+      const proximityPoints = lunarDistances <= 1 ? 35 : lunarDistances <= 5 ? 28 : lunarDistances <= 20 ? 18 : lunarDistances <= 100 ? 8 : 2;
+      const diameterPoints = diameter >= 1000 ? 25 : diameter >= 300 ? 18 : diameter >= 100 ? 10 : 4;
+      const velocityPoints = velocity >= 100000 ? 15 : velocity >= 60000 ? 10 : velocity >= 30000 ? 6 : 2;
+      const score = Math.min(100, hazardousPoints + proximityPoints + diameterPoints + velocityPoints);
+      const riskLevel = score >= 75 ? "HIGH" : score >= 50 ? "ELEVATED" : score >= 25 ? "MODERATE" : "LOW";
+      return { score, riskLevel, lunarDistances, factors: { hazardous: hazardousPoints, proximity: proximityPoints, diameter: diameterPoints, velocity: velocityPoints } };
+    }
+
+    function deterministicAssessment(ast) {
+      return `${ast.name} is classified ${ast.threatCategory} by the prototype heuristic: ${ast.distance.toLocaleString()} km miss distance, ${Math.round(ast.velocity).toLocaleString()} km/h relative velocity and an estimated ${Math.round(ast.diameter)} m diameter. This is automated telemetry interpretation, not an official NASA prediction.`;
+    }
+
     function processAsteroid(raw, index) {
       try {
         const dia = raw.diameter_meters ?? raw.diameter_m ?? raw.diameter ?? 50;
@@ -635,17 +689,9 @@
         if (ttaHours < 24) approachStr = Math.round(ttaHours) + "h";
         else if (ttaHours < 24 * 30) approachStr = Math.round(ttaHours / 24) + "d";
 
-        // Calculate a stable Synthetic Threat Score (0.0 - 10.0)
-        let score = 0;
-        if (haz) score += 5.0;
-        score += Math.min((dia / 1000) * 3, 3); // Size factor
-        score += Math.min(dist > 0 ? (1000000 / dist) * 2 : 0, 2); // Proximity factor
-        const finalScore = Math.min(Math.max(score, 0), 10);
-        
-        let cat = "LOW";
-        if (finalScore >= 8) cat = "CRITICAL";
-        else if (finalScore >= 6) cat = "ELEVATED";
-        else if (finalScore >= 3) cat = "WATCH";
+        if (!raw.name && !raw.id && !raw.neo_reference_id) return null;
+        if (!Number.isFinite(Number(dia)) || !Number.isFinite(Number(vel)) || !Number.isFinite(Number(dist)) || Number(dist) <= 0) return null;
+        const threat = calculateThreatIndex({ hazardous: haz, diameter: Number(dia), velocity: Number(vel), distance: Number(dist) });
 
         return {
           id: index,
@@ -654,10 +700,16 @@
           velocity: vel,
           distance: dist,
           hazardous: haz,
-          assessment: raw.assessment || raw.ai_assessment || raw.summary || "Standard orbital transit.",
+          assessment: raw.assessment || raw.automated_assessment || raw.summary || "",
           approachStr: approachStr,
-          threatScore: finalScore,
-          threatCategory: cat
+          threatScore: threat.score,
+          threatCategory: raw.risk_level || threat.riskLevel,
+          factors: raw.risk_factors || threat.factors,
+          source: raw.source || "NASA NeoWs",
+          processedBy: raw.processed_by || "n8n",
+          nasaUrl: raw.nasa_jpl_url || raw.nasa_jpl_reference,
+          generatedAt: raw.generated_at || null,
+          isSimulation: raw.source === "SIMULATION"
         };
       } catch (e) { return null; }
     }
@@ -680,11 +732,14 @@
         const hash = simpleHash(rawText);
         if (hash === state.lastDataHash) {
           state.lastFetchedAt = new Date();
-          updateSystemStatus("ONLINE");
+          updateSystemStatus(state.metadata.pipeline_status || "OPERATIONAL");
           return false;
         }
 
         let data = JSON.parse(rawText);
+        state.metadata = Array.isArray(data) ? {} : (data.metadata || {});
+        // Prefer pipeline provenance; HTTP Last-Modified keeps legacy array feeds from appearing fresh merely because they were fetched now.
+        state.feedGeneratedAt = state.metadata.generated_at || data.generated_at || res.headers.get("last-modified") || null;
         let arr = Array.isArray(data) ? data : (data.asteroids || data.near_earth_objects || Object.values(data).find(Array.isArray) || []);
         
         const processed = arr.map((a, i) => processAsteroid(a, i)).filter(a => a !== null);
@@ -695,7 +750,8 @@
         state.lastFetchedAt = new Date();
         state.feedStatus = "live";
         
-        updateSystemStatus("ONLINE");
+        state.liveAsteroids = processed;
+        updateSystemStatus(state.metadata.pipeline_status || "OPERATIONAL");
         return true;
       } catch (err) {
         state.feedStatus = err.name === "AbortError" ? "timeout" : "error";
@@ -711,6 +767,36 @@
     $("sidebar-toggle").addEventListener("click", () => {
       document.querySelector(".hud").classList.toggle("sidebar-closed");
     });
+
+    function toggleArchitecture(open) {
+      const modal = $("architecture-modal");
+      modal.hidden = !open;
+      modal.style.display = open ? "flex" : "none";
+      if (open) $("architecture-close").focus();
+    }
+
+    function toggleSimulation(enable) {
+      state.simulationActive = enable;
+      $("simulation-banner").style.display = enable ? "block" : "none";
+      if (enable) {
+        const simulated = processAsteroid({ id: "SIM-2026-NTI", name: "SIM-2026 NTI", diameter_meters: 720, velocity_kmh: 112000, miss_distance_km: 520000, hazardous: true, source: "SIMULATION", processed_by: "n8n simulation branch", approach_date: "DEMO EVENT" }, 0);
+        simulated.assessment = "SIMULATED EVENT — NOT REAL NASA TELEMETRY. The elevated parameters exercise the same validation, normalization, deterministic scoring and alert-routing design used by the workflow.";
+        state.asteroids = [simulated];
+        state.selectedIndex = 0;
+      } else {
+        state.asteroids = state.liveAsteroids;
+        state.selectedIndex = state.asteroids.length ? 0 : -1;
+      }
+      buildUI();
+      buildThreeJSAsteroids();
+      selectAsteroid(state.selectedIndex);
+    }
+
+    $("architecture-toggle").addEventListener("click", (event) => { event.preventDefault(); toggleArchitecture(true); });
+    $("architecture-close").addEventListener("click", () => toggleArchitecture(false));
+    $("architecture-modal").addEventListener("click", (event) => { if (event.target === $("architecture-modal")) toggleArchitecture(false); });
+    $("simulation-start").addEventListener("click", () => { toggleArchitecture(false); toggleSimulation(true); });
+    $("simulation-exit").addEventListener("click", () => toggleSimulation(false));
 
     // Setup Navigation Links for smooth scrolling and visual feedback
     document.querySelectorAll('.nav-links a').forEach(link => {
@@ -748,14 +834,16 @@
     });
 
     function updateSystemStatus(statusStr) {
-      const isOk = statusStr === "ONLINE";
-      $("sys-feed-txt").innerText = statusStr;
-      $("sys-feed-dot").className = `dot ${isOk ? 'live' : 'error'}`;
-      
-      if (state.lastFetchedAt) {
-        const d = state.lastFetchedAt;
-        $("sys-sync").innerText = `${String(d.getUTCHours()).padStart(2,"0")}:${String(d.getUTCMinutes()).padStart(2,"0")} UTC`;
-      }
+      const generated = state.feedGeneratedAt ? new Date(state.feedGeneratedAt) : null;
+      const ageMs = generated && !Number.isNaN(generated.valueOf()) ? Date.now() - generated.valueOf() : null;
+      const stale = ageMs !== null && ageMs > STALE_THRESHOLD_MS;
+      const isOk = /ONLINE|OPERATIONAL|SUCCESS/i.test(statusStr) && !stale;
+      $("sys-feed-txt").innerText = stale ? "STALE DATA" : (isOk ? "OPERATIONAL" : statusStr);
+      $("sys-feed-dot").className = `dot ${stale ? 'stale' : isOk ? 'live' : 'error'}`;
+      const d = generated || state.lastFetchedAt;
+      if (d) $("sys-sync").innerText = `${d.toISOString().replace("T", " ").slice(0, 16)} UTC`;
+      if ($("sys-age")) $("sys-age").innerText = ageMs === null ? "UNKNOWN" : ageMs < 3600000 ? `${Math.max(0, Math.floor(ageMs / 60000))}m` : `${Math.floor(ageMs / 3600000)}h`;
+      if ($("sys-automation")) $("sys-automation").innerText = state.metadata.schedule || "n8n / 12h";
     }
 
     function buildUI() {
@@ -767,7 +855,7 @@
       const upcoming = state.asteroids.filter(a => a.approachStr !== "Transiting");
       $("ov-approaches").innerText = upcoming.length;
       
-      const elevated = state.asteroids.filter(a => a.threatCategory === "ELEVATED" || a.threatCategory === "CRITICAL");
+      const elevated = state.asteroids.filter(a => a.threatCategory === "ELEVATED" || a.threatCategory === "HIGH");
       $("ov-risk").innerText = elevated.length;
       $("ov-risk").className = `ov-val ${elevated.length > 0 ? 'accent' : ''}`;
       
@@ -775,13 +863,13 @@
       $("ov-next").innerText = closest.approachStr;
 
       // 2. Threat Distribution
-      const dist = { LOW: 0, WATCH: 0, ELEVATED: 0, CRITICAL: 0 };
+      const dist = { LOW: 0, MODERATE: 0, ELEVATED: 0, HIGH: 0 };
       state.asteroids.forEach(a => dist[a.threatCategory]++);
       const total = state.asteroids.length;
       
       let distHTML = '';
-      ['CRITICAL', 'ELEVATED', 'WATCH', 'LOW'].forEach(cat => {
-        if (dist[cat] > 0 || cat === 'CRITICAL' || cat === 'ELEVATED') {
+      ['HIGH', 'ELEVATED', 'MODERATE', 'LOW'].forEach(cat => {
+        if (dist[cat] > 0 || cat === 'HIGH' || cat === 'ELEVATED') {
           const pct = Math.round((dist[cat] / total) * 100);
           const colorVar = `var(--${cat.toLowerCase()})`;
           distHTML += `
@@ -858,7 +946,7 @@
       const ast = state.asteroids[index];
       
       // Threat UI Override for Hazardous objects
-      document.body.classList.toggle('danger-mode', ast.hazardous);
+      document.body.classList.toggle('danger-mode', ast.threatCategory === "HIGH");
       
       // Update Table Highlight
       document.querySelectorAll('#approach-list tr').forEach(tr => {
@@ -871,14 +959,14 @@
       $("tel-vel").innerHTML = formatVel(ast.velocity);
       $("tel-dist").innerHTML = formatDist(ast.distance);
       $("tel-time").innerHTML = `<span class="val">${ast.approachStr}</span>`;
-      $("tel-assess").innerText = ast.assessment;
+      $("tel-assess").innerText = ast.assessment || deterministicAssessment(ast);
+      $("tel-factors").innerText = `Potentially hazardous: +${ast.factors.hazardous}\nProximity: +${ast.factors.proximity}\nDiameter: +${ast.factors.diameter}\nVelocity: +${ast.factors.velocity}\nFinal classification: ${ast.threatCategory}`;
+      $("tel-provenance").innerHTML = `SOURCE: ${ast.source} · PROCESSED BY: ${ast.processedBy} · RISK MODEL: Prototype NEO Threat Index${ast.nasaUrl ? ` · <a href="${ast.nasaUrl}" target="_blank" rel="noopener" style="color:var(--accent)">NASA/JPL reference</a>` : ''}`;
 
       // Update Threat Score
-      $("ts-score").innerText = ast.threatScore.toFixed(1).padStart(4, "0");
-      $("ts-class").innerText = ast.hazardous ? "HAZARDOUS" : ast.threatCategory;
-      if (!ast.hazardous) {
-        $("ts-class").style.color = `var(--${ast.threatCategory.toLowerCase()})`;
-      }
+      $("ts-score").innerText = `${Math.round(ast.threatScore)}/100`;
+      $("ts-class").innerText = ast.threatCategory;
+      $("ts-class").style.color = ast.threatCategory === "HIGH" ? "var(--critical)" : `var(--${ast.threatCategory.toLowerCase()})`;
 
       // Update 3D Selection
       updateThreeJSSelection();

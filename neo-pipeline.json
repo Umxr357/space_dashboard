@@ -1,102 +1,18 @@
 {
-  "name": "NEO Threat Intelligence Pipeline",
-  "nodes": [
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "hours",
-              "hoursInterval": 12
-            }
-          ]
-        }
-      },
-      "id": "trigger-node",
-      "name": "Schedule Trigger",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1,
-      "position": [ 100, 300 ]
-    },
-    {
-      "parameters": {
-        "url": "=https://api.nasa.gov/neo/rest/v1/feed?start_date={{ $today }}&end_date={{ $today }}&api_key=DEMO_KEY",
-        "options": {}
-      },
-      "id": "http-nasa",
-      "name": "Fetch NASA NeoWs",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [ 300, 300 ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all()[0].json.near_earth_objects;\nlet results = [];\n\nfor (const date in items) {\n  for (const ast of items[date]) {\n    // Safely extract values\n    const dia_min = ast.estimated_diameter?.meters?.estimated_diameter_min || 0;\n    const dia_max = ast.estimated_diameter?.meters?.estimated_diameter_max || 100;\n    const dia = (dia_min + dia_max) / 2;\n    \n    const approach = ast.close_approach_data && ast.close_approach_data.length > 0 \n      ? ast.close_approach_data[0] \n      : null;\n      \n    const vel = approach ? parseFloat(approach.relative_velocity.kilometers_per_hour) : 0;\n    const dist = approach ? parseFloat(approach.miss_distance.kilometers) : 0;\n    const haz = ast.is_potentially_hazardous_asteroid || false;\n    \n    results.push({\n      name: ast.name,\n      diameter: dia,\n      velocity: vel,\n      miss_distance: dist,\n      hazardous: haz,\n      assessment: haz ? \"CRITICAL RISK: Object flagged as potentially hazardous by NASA CNEOS.\" : \"Standard orbital transit. No immediate threat.\",\n      date: approach ? approach.close_approach_date : \"Unknown\"\n    });\n  }\n}\n\nreturn [{ json: { asteroids: results } }];"
-      },
-      "id": "code-transform",
-      "name": "Transform Telemetry",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
-      "position": [ 500, 300 ]
-    },
-    {
-      "parameters": {
-        "resource": "file",
-        "operation": "edit",
-        "owner": "Umxr357",
-        "repository": "space_dashboard",
-        "filePath": "daily-asteroids.json",
-        "fileContent": "={{ JSON.stringify($json.asteroids, null, 2) }}",
-        "commitMessage": "chore: automated telemetry uplink via n8n"
-      },
-      "id": "github-push",
-      "name": "Uplink to GitHub",
-      "type": "n8n-nodes-base.github",
-      "typeVersion": 1,
-      "position": [ 700, 300 ],
-      "credentials": {
-        "githubOAuth2Api": {
-          "id": "",
-          "name": "GitHub account"
-        }
-      }
-    }
-  ],
-  "connections": {
-    "Schedule Trigger": {
-      "main": [
-        [
-          {
-            "node": "Fetch NASA NeoWs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fetch NASA NeoWs": {
-      "main": [
-        [
-          {
-            "node": "Transform Telemetry",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Transform Telemetry": {
-      "main": [
-        [
-          {
-            "node": "Uplink to GitHub",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
-  },
+  "name": "NEO Threat Index — Intelligence Orchestration",
   "active": false,
-  "settings": {}
+  "settings": { "executionOrder": "v1", "errorWorkflow": "Configure an n8n error workflow for production notifications." },
+  "nodes": [
+    { "id": "schedule", "name": "Schedule NASA Intelligence Sync", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1, "position": [0, 300], "parameters": { "rule": { "interval": [{ "field": "hours", "hoursInterval": 12 }] } }, "notes": "Bounded periodic refresh; activate after credentials are configured." },
+    { "id": "fetch", "name": "Fetch NASA NeoWs Feed", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [240, 300], "parameters": { "url": "=https://api.nasa.gov/neo/rest/v1/feed?start_date={{ $today }}&end_date={{ $today }}&api_key={{ $env.NASA_API_KEY }}", "options": { "timeout": 15000, "retry": { "maxTries": 3, "waitBetweenTries": 2000 } } }, "notes": "NASA key is an n8n environment variable, never exported." },
+    { "id": "validate", "name": "Validate NASA Response", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [500, 300], "parameters": { "jsCode": "const feed=$input.first().json;if(!feed?.near_earth_objects)throw new Error('NASA response missing near_earth_objects');const candidates=Object.values(feed.near_earth_objects).flat();const valid=candidates.filter(a=>a?.id&&a?.name&&Array.isArray(a.close_approach_data)&&a.close_approach_data.length);if(!valid.length)throw new Error('No valid close-approach records');return [{json:{valid,rejected:candidates.length-valid.length,source:'NASA NeoWs'}}];" }, "notes": "Malformed records are rejected before publication; an empty valid set fails visibly." },
+    { "id": "normalize", "name": "Normalize Telemetry", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [760, 300], "parameters": { "jsCode": "const {valid,rejected,source}=$input.first().json;const asteroids=[];for(const a of valid){const c=a.close_approach_data[0],v=Number(c?.relative_velocity?.kilometers_per_hour),d=Number(c?.miss_distance?.kilometers),min=Number(a?.estimated_diameter?.meters?.estimated_diameter_min),max=Number(a?.estimated_diameter?.meters?.estimated_diameter_max);if(![v,d,min,max].every(Number.isFinite)||d<=0)continue;asteroids.push({id:a.id,name:a.name,diameter_meters:(min+max)/2,velocity_kmh:v,miss_distance_km:d,hazardous:Boolean(a.is_potentially_hazardous_asteroid),approach_date:c.close_approach_date_full||c.close_approach_date,orbiting_body:c.orbiting_body,nasa_jpl_url:a.nasa_jpl_url,source,processed_by:'n8n'});}return [{json:{asteroids,rejected}}];" }, "notes": "Creates the dashboard's stable, documented schema." },
+    { "id": "score", "name": "Calculate Deterministic Threat Index", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [1020, 300], "parameters": { "jsCode": "for(const a of $json.asteroids){const ld=a.miss_distance_km/384400,h=a.hazardous?25:0,p=ld<=1?35:ld<=5?28:ld<=20?18:ld<=100?8:2,d=a.diameter_meters>=1000?25:a.diameter_meters>=300?18:a.diameter_meters>=100?10:4,v=a.velocity_kmh>=100000?15:a.velocity_kmh>=60000?10:a.velocity_kmh>=30000?6:2,s=Math.min(100,h+p+d+v);a.threat_score=s;a.risk_factors={hazardous:h,proximity:p,diameter:d,velocity:v};a.risk_level=s>=75?'HIGH':s>=50?'ELEVATED':s>=25?'MODERATE':'LOW';a.assessment=`Automated assessment: ${a.risk_level} under the Prototype NEO Threat Index.`;}return $input.all();" }, "notes": "No AI decides risk. The formula is transparent and deterministic." },
+    { "id": "route", "name": "Route Elevated or High Threat", "type": "n8n-nodes-base.if", "typeVersion": 2, "position": [1280, 300], "parameters": { "conditions": { "options": { "caseSensitive": true }, "conditions": [{ "leftValue": "={{ $json.asteroids.some(a => ['ELEVATED','HIGH'].includes(a.risk_level)) }}", "rightValue": true, "operator": { "type": "boolean", "operation": "true" } }], "combinator": "and" } }, "notes": "Conditional orchestration: elevated/high runs create an auditable alert record." },
+    { "id": "alert", "name": "Create Webhook-Compatible Alert", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [1530, 170], "parameters": { "jsCode": "const alerts=$json.asteroids.filter(a=>['ELEVATED','HIGH'].includes(a.risk_level)).map(a=>({event:'neo_threat_alert',severity:a.risk_level,object_id:a.id,source:a.source,generated_at:new Date().toISOString()}));return [{json:{...$json,alerts}}];" }, "notes": "Connect this output to Slack, email, Discord or a webhook with credentials configured in n8n." },
+    { "id": "package", "name": "Package Dashboard Intelligence", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [1530, 430], "parameters": { "jsCode": "return[{json:{metadata:{schema_version:'3.0',pipeline_status:'OPERATIONAL',generated_at:new Date().toISOString(),schedule:'n8n / every 12 hours',source:'NASA NeoWs',processed_by:'n8n',risk_model:'Prototype NEO Threat Index',rejected_records:$json.rejected},asteroids:$json.asteroids}}];" }, "notes": "AI is intentionally not included: the deterministic fallback is technically honest until an authenticated LLM node is configured." },
+    { "id": "persist", "name": "Publish Auditable Dashboard JSON", "type": "n8n-nodes-base.github", "typeVersion": 1, "position": [1790, 430], "parameters": { "resource": "file", "operation": "edit", "owner": "Umxr357", "repository": "space_dashboard", "filePath": "daily-asteroids.json", "fileContent": "={{ JSON.stringify($json, null, 2) }}", "commitMessage": "chore: n8n processed NEO intelligence" }, "notes": "GitHub is deliberately used as auditable, zero-backend prototype persistence." }
+  ],
+  "connections": { "Schedule NASA Intelligence Sync": { "main": [[{ "node": "Fetch NASA NeoWs Feed", "type": "main", "index": 0 }]] }, "Fetch NASA NeoWs Feed": { "main": [[{ "node": "Validate NASA Response", "type": "main", "index": 0 }]] }, "Validate NASA Response": { "main": [[{ "node": "Normalize Telemetry", "type": "main", "index": 0 }]] }, "Normalize Telemetry": { "main": [[{ "node": "Calculate Deterministic Threat Index", "type": "main", "index": 0 }]] }, "Calculate Deterministic Threat Index": { "main": [[{ "node": "Route Elevated or High Threat", "type": "main", "index": 0 }]] }, "Route Elevated or High Threat": { "main": [[{ "node": "Create Webhook-Compatible Alert", "type": "main", "index": 0 }],[{ "node": "Package Dashboard Intelligence", "type": "main", "index": 0 }]] }, "Create Webhook-Compatible Alert": { "main": [[{ "node": "Package Dashboard Intelligence", "type": "main", "index": 0 }]] }, "Package Dashboard Intelligence": { "main": [[{ "node": "Publish Auditable Dashboard JSON", "type": "main", "index": 0 }]] } },
+  "pinData": {}
 }

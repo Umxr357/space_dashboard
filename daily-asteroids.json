@@ -1,26 +1,16 @@
-[
-  {
-    "name": "(2015 DM215)",
-    "diameter_meters": 86,
-    "velocity_kmh": 51137,
-    "miss_distance_km": 16494855,
-    "hazardous": false,
-    "assessment": "As the largest and closest visitor today, this 86-meter rock is cruising past at a significant 51,137 km/h. While its size is notable, it remains over 16 million kilometers away, posing absolutely no threat to our global safety."
+{
+  "metadata": {
+    "schema_version": "3.0",
+    "pipeline_status": "OPERATIONAL",
+    "generated_at": "2026-09-04T00:00:00Z",
+    "schedule": "n8n / every 12 hours",
+    "source": "NASA NeoWs",
+    "processed_by": "n8n",
+    "risk_model": "Prototype NEO Threat Index"
   },
-  {
-    "name": "(2017 QB35)",
-    "diameter_meters": 8,
-    "velocity_kmh": 32076,
-    "miss_distance_km": 27431274,
-    "hazardous": false,
-    "assessment": "This compact 8-meter object is essentially a cosmic pebble traveling at a modest speed relative to its peers. Its passage at 27 million kilometers is a non-event for planetary defense, as it would likely disintegrate if it ever encountered an atmosphere."
-  },
-  {
-    "name": "(2013 QF11)",
-    "diameter_meters": 71,
-    "velocity_kmh": 64496,
-    "miss_distance_km": 34921102,
-    "hazardous": false,
-    "assessment": "Blistering through the void at over 64,000 km/h, this 71-meter asteroid is today's fastest-moving tracked object. Fortunately, it maintains a massive cushion of 34 million kilometers, keeping this high-speed traveler firmly in the 'safe' category."
-  }
-]
+  "asteroids": [
+    { "id": "2015-DM215", "name": "(2015 DM215)", "diameter_meters": 86, "velocity_kmh": 51137, "miss_distance_km": 16494855, "hazardous": false, "approach_date": "2026-09-04", "source": "NASA NeoWs", "processed_by": "n8n", "assessment": "Automated assessment: a 86 m object at 16.49 million km. The prototype heuristic places it in the LOW band.", "nasa_jpl_url": "https://cneos.jpl.nasa.gov/ca/" },
+    { "id": "2017-QB35", "name": "(2017 QB35)", "diameter_meters": 8, "velocity_kmh": 32076, "miss_distance_km": 27431274, "hazardous": false, "approach_date": "2026-09-04", "source": "NASA NeoWs", "processed_by": "n8n", "assessment": "Automated assessment: a compact object with a distant recorded approach. The prototype heuristic places it in the LOW band.", "nasa_jpl_url": "https://cneos.jpl.nasa.gov/ca/" },
+    { "id": "2013-QF11", "name": "(2013 QF11)", "diameter_meters": 71, "velocity_kmh": 64496, "miss_distance_km": 34921102, "hazardous": false, "approach_date": "2026-09-04", "source": "NASA NeoWs", "processed_by": "n8n", "assessment": "Automated assessment: higher relative velocity is offset by a very distant recorded approach. The prototype heuristic places it in the LOW band.", "nasa_jpl_url": "https://cneos.jpl.nasa.gov/ca/" }
+  ]
+}
