@@ -40,14 +40,20 @@
 
       --sans: 'Inter', sans-serif;
       --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+      --score-angle: 65deg;
     }
     
     * { box-sizing: border-box; }
     
     html, body {
-      width: 100%; height: 100%; margin: 0; background: var(--bg); color: var(--text);
+      width: 100%; height: 100%; margin: 0; background:
+        radial-gradient(circle at 74% 22%, rgba(0, 255, 255, 0.075), transparent 24%),
+        radial-gradient(circle at 21% 82%, rgba(40, 70, 255, 0.07), transparent 30%),
+        var(--bg); color: var(--text);
       font-family: var(--sans); overflow: hidden; -webkit-font-smoothing: antialiased;
     }
+    body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .18;
+      background-image: radial-gradient(rgba(255,255,255,.36) .45px, transparent .6px); background-size: 5px 5px; mix-blend-mode: soft-light; }
     
     /* 3D Canvas Background */
     #space { position: fixed; inset: 0; z-index: 0; }
@@ -58,19 +64,20 @@
     .grid-overlay {
       position: fixed; inset: 0; z-index: 1; pointer-events: none;
       background-image:
-        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        linear-gradient(rgba(75, 245, 255, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(75, 245, 255, 0.055) 1px, transparent 1px);
       background-size: 50px 50px;
       background-position: center center;
     }
     .grid-overlay::before {
       content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 400px; height: 400px; border: 1px dashed rgba(255,255,255,0.05); border-radius: 50%;
+      width: min(52vw, 620px); height: min(52vw, 620px); border: 1px dashed rgba(0,255,255,0.12); border-radius: 50%;
+      box-shadow: 0 0 90px rgba(0,255,255,.035), inset 0 0 75px rgba(0,255,255,.025);
     }
     .grid-overlay::after {
       content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 40px; height: 40px;
-      border-top: 1px solid rgba(255,255,255,0.2); border-bottom: 1px solid rgba(255,255,255,0.2);
+      width: 54px; height: 54px; border-radius: 50%;
+      border: 1px solid rgba(0,255,255,.3); box-shadow: 0 0 24px rgba(0,255,255,.18);
     }
     
     /* CRT Scanlines for Hazard Alert */
@@ -83,17 +90,17 @@
     }
     
     /* Danger Mode Activated */
-    body.danger-mode .scanlines { opacity: 1; }
+    body.danger-mode .scanlines { opacity: .12; }
     
     body.danger-mode::after {
       content: ""; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
       box-shadow: inset 0 0 0px rgba(255, 0, 0, 0);
-      animation: dangerPulse 1s infinite alternate ease-in-out;
+      animation: dangerPulse 2.2s infinite alternate ease-in-out;
     }
     
     @keyframes dangerPulse {
-      0% { box-shadow: inset 0 0 40px rgba(255, 51, 102, 0.1); border: 0px solid transparent; }
-      100% { box-shadow: inset 0 0 120px rgba(255, 51, 102, 0.2), inset 0 0 20px rgba(255, 51, 102, 0.4); border: 4px solid rgba(255, 51, 102, 0.3); }
+      0% { box-shadow: inset 0 0 32px rgba(255, 51, 102, 0.07); }
+      100% { box-shadow: inset 0 0 88px rgba(255, 51, 102, 0.16), inset 0 0 16px rgba(255, 51, 102, 0.22); }
     }
     
     body.danger-mode #sec-threat-score, body.danger-mode #sec-telemetry {
@@ -118,7 +125,7 @@
     .hud {
       position: absolute; inset: 0; z-index: 10; pointer-events: none;
       display: grid; 
-      grid-template-columns: var(--sidebar-width, 420px) 1fr 380px; 
+      grid-template-columns: var(--sidebar-width, 365px) 1fr 345px;
       grid-template-rows: 64px 1fr auto;
       transition: grid-template-columns 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
@@ -131,27 +138,37 @@
     /* Top Navigation */
     .topbar {
       grid-column: 1 / -1; grid-row: 1; display: flex; align-items: center; justify-content: space-between;
-      padding: 0 32px; border-bottom: 1px solid var(--panel-border);
-      background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+      padding: 0 32px; border-bottom: 1px solid rgba(130,255,255,.13);
+      background: linear-gradient(90deg, rgba(5,9,13,.96), rgba(4,8,13,.78) 54%, rgba(1,11,16,.94));
+      box-shadow: 0 12px 40px rgba(0,0,0,.18);
     }
     .icon-btn {
       background: transparent; border: none; color: var(--muted); cursor: pointer;
       padding: 8px; margin-right: 16px; border-radius: 4px; transition: all 0.2s;
       display: flex; align-items: center; justify-content: center;
     }
-    .icon-btn:hover { color: var(--white); background: rgba(255,255,255,0.1); }
-    .brand { display: flex; align-items: center; gap: 16px; }
-    .brand h1 { margin: 0; color: var(--white); font-size: 14px; font-weight: 600; letter-spacing: 0.1em; }
-    .brand span { color: var(--muted); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; border-left: 1px solid var(--line); padding-left: 16px; }
+    .icon-btn:hover { color: var(--accent); background: rgba(0,255,255,.08); box-shadow: inset 0 0 0 1px rgba(0,255,255,.13); }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-mark { position: relative; width: 25px; height: 25px; border: 1px solid rgba(0,255,255,.55); border-radius: 50%; box-shadow: 0 0 16px rgba(0,255,255,.22), inset 0 0 12px rgba(0,255,255,.1); }
+    .brand-mark::before, .brand-mark::after { content:""; position:absolute; inset:5px; border:1px solid rgba(0,255,255,.38); border-radius:50%; }
+    .brand-mark::after { inset:10px; background:var(--accent); border:0; box-shadow:0 0 10px var(--accent); }
+    .brand h1 { margin: 0; color: var(--white); font-size: 14px; font-weight: 700; letter-spacing: 0.14em; }
+    .brand span { color: #7d9298; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; border-left: 1px solid rgba(0,255,255,.2); padding-left: 14px; }
     .nav-links { display: flex; gap: 24px; }
     .nav-links a { color: var(--muted); text-decoration: none; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; transition: color 0.2s; }
+    .nav-links a { position: relative; padding: 6px 0; }
+    .nav-links a::after { content:""; position:absolute; left:0; right:100%; bottom:0; height:1px; background:var(--accent); transition:right .25s ease; }
     .nav-links a:hover, .nav-links a.active { color: var(--white); }
+    .nav-links a:hover::after, .nav-links a.active::after { right:0; }
+    .system-status { display:flex; align-items:center; gap:10px; color:#90a9ae; font:500 10px var(--mono); letter-spacing:.08em; }
+    .system-status .system-feed { display:flex; align-items:center; gap:7px; padding:6px 9px; border:1px solid rgba(0,255,136,.16); background:rgba(0,255,136,.035); }
+    .system-divider { width:1px; height:18px; background:rgba(255,255,255,.11); }
     
     /* Left Panel (Scrollable Intelligence Feed) */
     .panel-left {
-      width: 420px;
+      width: 365px;
       grid-column: 1; grid-row: 2 / -1; overflow-y: auto; overflow-x: hidden;
-      background: var(--surface); backdrop-filter: blur(12px); border-right: 1px solid var(--panel-border);
+      background: linear-gradient(180deg, rgba(8,13,17,.88), rgba(3,5,8,.78)); backdrop-filter: blur(18px); border-right: 1px solid rgba(130,255,255,.11);
       display: flex; flex-direction: column;
       transform: translateX(0);
       transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s;
@@ -160,25 +177,36 @@
       transform: translateX(-100%);
       opacity: 0;
     }
+    .panel-left .hero { order:-2; }
+    .panel-left #sec-approaches { order:-1; }
     
     .panel-left::-webkit-scrollbar { width: 4px; }
     .panel-left::-webkit-scrollbar-thumb { background: var(--dim); }
     
     /* Section Formatting */
-    .section { padding: 32px; border-bottom: 1px solid var(--line); }
-    .section-header { margin: 0 0 24px 0; font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; display: flex; align-items: center; gap: 12px; }
-    .section-header::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+    .section { padding: 32px; border-bottom: 1px solid rgba(255,255,255,.075); }
+    .section-header { margin: 0 0 24px 0; font-size: 9px; font-weight: 700; color: #77939a; letter-spacing: 0.2em; text-transform: uppercase; display: flex; align-items: center; gap: 12px; }
+    .section-header::before { content:""; width:5px; height:5px; background:var(--accent); box-shadow:0 0 9px var(--accent); transform:rotate(45deg); }
+    .section-header::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(0,255,255,.24), transparent); }
     
     /* Hero */
-    .hero { padding-bottom: 16px; }
-    .hero h2 { margin: 0 0 12px; font-size: 32px; font-weight: 500; color: var(--white); letter-spacing: -0.04em; line-height: 1.1; }
-    .hero p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .hero { padding-bottom: 26px; background: radial-gradient(circle at 0% 0%, rgba(0,255,255,.08), transparent 52%); }
+    .hero-kicker { display:flex; align-items:center; gap:8px; margin-bottom:15px; color:#85a7ad; font:700 9px var(--mono); letter-spacing:.16em; }
+    .hero-kicker .dot { width:7px; height:7px; animation: statusPulse 1.6s ease-in-out infinite; }
+    @keyframes statusPulse { 50% { opacity:.35; transform:scale(.72); } }
+    .hero h2 { margin: 0 0 14px; font-size: 35px; font-weight: 600; color: var(--white); letter-spacing: -0.055em; line-height: 1.02; text-wrap: balance; }
+    .hero h2 span { color:var(--accent); text-shadow:0 0 22px rgba(0,255,255,.22); }
+    .hero p { margin: 0; font-size: 12px; color: #89999e; line-height: 1.75; }
+    .hero-readout { margin-top:22px; padding-top:14px; border-top:1px solid rgba(0,255,255,.15); display:flex; flex-direction:column; gap:5px; }
+    .hero-readout span { font:700 8px var(--mono); color:#5d7378; letter-spacing:.16em; }
+    .hero-readout strong { font:600 10px var(--mono); color:#b7e4e7; letter-spacing:.08em; }
     
     /* Threat Overview Grid */
-    .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); }
-    .ov-card { background: rgba(0,0,0,0.5); padding: 20px; display: flex; flex-direction: column; justify-content: space-between; }
+    .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(121,255,255,.15); border: 1px solid rgba(121,255,255,.15); box-shadow: 0 16px 32px rgba(0,0,0,.15); }
+    .ov-card { background: linear-gradient(145deg, rgba(13,20,25,.94), rgba(4,7,10,.88)); padding: 20px; display: flex; flex-direction: column; justify-content: space-between; min-height:105px; transition: background .25s, transform .25s; }
+    .ov-card:hover { background:linear-gradient(145deg, rgba(12,35,40,.96), rgba(4,10,13,.94)); transform:translateY(-2px); }
     .ov-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
-    .ov-val { font-family: var(--mono); font-size: 28px; font-weight: 500; color: var(--white); letter-spacing: -0.05em; }
+    .ov-val { font-family: var(--mono); font-size: 28px; font-weight: 600; color: var(--white); letter-spacing: -0.07em; text-shadow:0 0 18px rgba(255,255,255,.07); }
     .ov-val.accent { color: var(--error); }
     .ov-unit { font-size: 12px; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
     
@@ -186,26 +214,29 @@
     .dist-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
     .dist-row:last-child { margin-bottom: 0; }
     .dist-lbl { width: 65px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
-    .dist-bar-bg { flex: 1; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
-    .dist-bar-fill { height: 100%; transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .dist-bar-bg { flex: 1; height: 5px; background: rgba(255,255,255,.07); border-radius: 2px; overflow: hidden; }
+    .dist-bar-fill { height: 100%; transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow:0 0 10px currentColor; }
     .dist-pct { width: 35px; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--white); }
     
-    /* Close Approaches Table */
-    .table-wrapper { max-height: 350px; overflow-y: auto; padding-right: 8px; }
-    .table-wrapper::-webkit-scrollbar { width: 4px; }
-    .table-wrapper::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 4px; }
-    .approach-table { width: 100%; border-collapse: collapse; text-align: left; }
-    .approach-table th { font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; padding: 0 0 12px 0; border-bottom: 1px solid var(--line); font-weight: 500; position: sticky; top: 0; background: var(--surface); z-index: 2; }
-    .approach-table td { font-family: var(--mono); font-size: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: color 0.2s; }
-    .approach-table tr:hover td { color: var(--white); }
-    .approach-table tr.active td { color: var(--accent); }
-    .td-obj { font-weight: 600; }
-    .td-dist { color: var(--muted); }
-    .td-time { text-align: right; }
+    /* Today's close approaches: compact, selectable mission cards */
+    .approach-list { display:flex; flex-direction:column; gap:8px; }
+    .approach-card { --card-accent: var(--accent); position:relative; overflow:hidden; width:100%; padding:13px 14px; border:1px solid rgba(146,255,255,.11); background:linear-gradient(115deg,rgba(11,23,29,.74),rgba(3,8,12,.6)); color:var(--text); text-align:left; cursor:pointer; font-family:var(--sans); transition:transform .2s ease,border-color .2s ease,background .2s ease,box-shadow .2s ease; }
+    .approach-card::before { content:""; position:absolute; inset:0 auto 0 0; width:2px; background:var(--card-accent); opacity:.68; box-shadow:0 0 12px var(--card-accent); }
+    .approach-card:hover { transform:translateX(3px); border-color:var(--card-accent); background:linear-gradient(115deg,rgba(15,39,45,.9),rgba(3,12,16,.8)); }
+    .approach-card.active { border-color:var(--card-accent); box-shadow:0 8px 24px rgba(0,255,255,.12), inset 0 0 26px rgba(0,255,255,.06); background:linear-gradient(115deg,rgba(11,35,40,.96),rgba(3,12,16,.88)); }
+    .approach-card-top, .approach-card-bottom { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .approach-card-top { margin-bottom:9px; }
+    .approach-rank { color:var(--card-accent); font:700 10px var(--mono); letter-spacing:.12em; }
+    .approach-name { max-width:195px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--white); font:600 12px var(--mono); letter-spacing:-.025em; }
+    .approach-chip { padding:3px 6px; border:1px solid var(--card-accent); color:var(--card-accent); font:700 8px var(--mono); letter-spacing:.1em; opacity:.9; }
+    .approach-metric { display:flex; flex-direction:column; gap:3px; }
+    .approach-metric:last-child { align-items:flex-end; text-align:right; }
+    .approach-metric span { color:#688087; font:600 8px var(--mono); letter-spacing:.11em; text-transform:uppercase; }
+    .approach-metric strong { color:#c9e1e4; font:500 10px var(--mono); letter-spacing:-.03em; }
     
     /* Data Confidence & System Status */
-    .diag-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
-    .diag-list li { display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 0.05em; }
+    .diag-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+    .diag-list li { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: .06em; padding:9px 10px; background:rgba(255,255,255,.025); border-left:1px solid rgba(0,255,255,.16); }
     .diag-lbl { color: var(--muted); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
     .diag-val { font-family: var(--mono); color: var(--white); }
     
@@ -217,38 +248,48 @@
     .panel-right > * { pointer-events: auto; }
     
     /* Threat Score Module */
-    .threat-module { background: var(--surface); backdrop-filter: blur(12px); border: 1px solid var(--panel-border); padding: 32px; transition: all 0.3s ease; }
+    .threat-module { position:relative; overflow:hidden; background: linear-gradient(135deg, rgba(10,18,23,.91), rgba(3,7,11,.82)); backdrop-filter: blur(18px); border: 1px solid rgba(132,255,255,.15); padding: 32px; transition: all .3s ease; box-shadow:0 18px 38px rgba(0,0,0,.22); }
+    .threat-module::after { content:""; position:absolute; top:0; left:0; width:76px; height:1px; background:linear-gradient(90deg,var(--accent),transparent); box-shadow:0 0 14px var(--accent); }
     .tm-header { display: flex; justify-content: space-between; align-items: flex-start; }
     .tm-title { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin: 0; }
-    .tm-score-container { text-align: right; }
-    .tm-score { font-family: var(--mono); font-size: 48px; font-weight: 500; color: var(--white); line-height: 1; letter-spacing: -0.05em; transition: color 0.3s; }
+    .tm-score-container { position:relative; isolation:isolate; min-width:132px; min-height:86px; padding:16px 8px 0 0; text-align:right; }
+    .tm-score-container::before { content:""; position:absolute; inset:0 0 0 auto; width:86px; height:86px; z-index:-1; border-radius:50%; background:conic-gradient(var(--accent) var(--score-angle), rgba(0,255,255,.09) 0); -webkit-mask:radial-gradient(transparent 60%,#000 62%); mask:radial-gradient(transparent 60%,#000 62%); opacity:.78; }
+    .tm-score { font-family: var(--mono); font-size: 45px; font-weight: 700; color: var(--white); line-height: 1; letter-spacing: -0.08em; transition: color 0.3s; text-shadow:0 0 24px rgba(255,255,255,.13); }
     .tm-class { font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 8px; transition: color 0.3s; }
+
+    /* The central stage preserves an unobstructed orbital focal point. */
+    .stage-readout { position:relative; grid-column:2; grid-row:2; align-self:start; justify-self:center; margin-top:28px; min-width:250px; padding:12px 15px; pointer-events:none; text-align:center; border:1px solid rgba(130,255,255,.14); background:linear-gradient(180deg,rgba(4,14,19,.74),rgba(3,8,12,.31)); backdrop-filter:blur(12px); box-shadow:0 16px 46px rgba(0,0,0,.16); }
+    .stage-readout::before { content:""; position:absolute; top:0; left:50%; width:44px; height:1px; transform:translateX(-50%); background:var(--accent); box-shadow:0 0 14px var(--accent); }
+    .stage-eyebrow { color:#78a4a9; font:700 8px var(--mono); letter-spacing:.17em; }
+    .stage-name { display:block; margin:7px 0 9px; color:var(--white); font:600 15px var(--mono); letter-spacing:-.04em; text-shadow:0 0 18px rgba(255,255,255,.12); }
+    .stage-metric { display:flex; justify-content:center; align-items:center; gap:8px; color:#6f8b90; font:600 8px var(--mono); letter-spacing:.12em; }
+    .stage-metric strong { color:var(--accent); font-size:10px; letter-spacing:-.03em; }
     
     /* Telemetry Grid & Selector */
     .tel-selector { position: relative; margin: 0 0 20px 0; }
     .tel-selector select {
       appearance: none; -webkit-appearance: none;
-      width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--line);
+      width: 100%; background: rgba(0,0,0,.36); border: 1px solid rgba(130,255,255,.16);
       color: var(--white); font-family: var(--mono); font-size: 16px; font-weight: 500;
       padding: 12px 32px 12px 16px; border-radius: 0; cursor: pointer; outline: none;
       transition: border-color 0.2s;
     }
-    .tel-selector select:hover { border-color: var(--muted); }
+    .tel-selector select:hover { border-color: rgba(0,255,255,.5); box-shadow:0 0 0 3px rgba(0,255,255,.04); }
     .tel-selector select:focus { border-color: var(--accent); }
     .tel-selector-arrow {
       position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
       pointer-events: none; color: var(--muted); font-size: 10px;
     }
     
-    .tel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); }
-    .tel-cell { background: rgba(0,0,0,0.6); padding: 16px; }
+    .tel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(140,255,255,.13); border: 1px solid rgba(140,255,255,.13); }
+    .tel-cell { background: rgba(1,5,8,.68); padding: 16px; }
     .tel-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
     .tel-val { font-family: var(--mono); font-size: 16px; color: var(--text); }
     .tel-val .unit { font-size: 10px; color: var(--dim); margin-left: 4px; letter-spacing: 0; }
     
     /* Bottom Center (Legend) */
     .panel-bottom { grid-column: 2; grid-row: 3; padding: 0 0 32px 32px; display: flex; align-items: flex-end; pointer-events: none; }
-    .legend { display: flex; gap: 24px; background: var(--surface); backdrop-filter: blur(8px); padding: 12px 24px; border: 1px solid var(--panel-border); border-radius: 100px; pointer-events: auto; }
+    .legend { display: flex; gap: 24px; background:rgba(5,12,16,.82); backdrop-filter: blur(14px); padding: 12px 24px; border:1px solid rgba(120,255,255,.17); border-radius: 100px; box-shadow:0 10px 30px rgba(0,0,0,.23); pointer-events:auto; }
     .leg-item { display: flex; align-items: center; gap: 8px; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
     .leg-dot { width: 8px; height: 8px; border-radius: 50%; }
     .leg-line { width: 16px; height: 1px; }
@@ -261,14 +302,16 @@
     
     /* Floating Labels (Three.js synced) */
     .marker { position: fixed; top: 0; left: 0; z-index: 5; pointer-events: none; color: var(--white); text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
-    .marker-title { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 4px; }
+    .marker-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border-bottom:1px solid rgba(0,255,255,.5); padding:5px 7px 4px; background:rgba(2,12,16,.8); box-shadow:0 0 18px rgba(0,255,255,.1); }
     .marker-sub { font-family: var(--mono); font-size: 9px; color: var(--muted); margin-top: 4px; display: block; }
     
     /* Boot Sequence / Loader */
-    .boot-overlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; flex-direction: column; justify-content: center; padding: 10vw; transition: opacity 0.8s ease; }
+    .boot-overlay { position: fixed; inset: 0; z-index: 9999; background:radial-gradient(circle at 50% 50%,rgba(0,255,255,.07),transparent 25%), var(--bg); display:flex; flex-direction:column; justify-content:center; padding:10vw; transition:opacity .8s ease; }
+    .boot-overlay::before { content:""; position:absolute; inset:0; opacity:.24; background:linear-gradient(rgba(0,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,255,.08) 1px,transparent 1px); background-size:44px 44px; }
+    .boot-overlay > * { position:relative; }
     .boot-overlay.hidden { opacity: 0; pointer-events: none; }
     .term-line { font-family: var(--mono); font-size: 13px; color: var(--muted); margin-bottom: 8px; }
-    .term-line.active { color: var(--white); }
+    .term-line.active { color: var(--accent); text-shadow:0 0 15px rgba(0,255,255,.35); }
     .blink { animation: blink 1s step-end infinite; }
     @keyframes blink { 50% { opacity: 0; } }
 
@@ -286,8 +329,8 @@
     
     /* Responsive Design - Desktop Scaling */
     @media (max-width: 1200px) {
-      .hud { grid-template-columns: var(--sidebar-width, 360px) 1fr 300px; }
-      .panel-left { width: 360px; }
+      .hud { grid-template-columns: var(--sidebar-width, 340px) 1fr 300px; }
+      .panel-left { width: 340px; }
       .ov-val { font-size: 22px; }
       .tm-score { font-size: 36px; }
       .tel-val { font-size: 14px; }
@@ -329,17 +372,17 @@
       .topbar { order: 1; position: sticky; top: 0; z-index: 20; background: var(--surface-solid); backdrop-filter: blur(16px); }
       #sec-threat-score { order: 2; padding: 20px !important; }
       #sec-hero { order: 4; }
-      #sec-overview { order: 5; }
-      #sec-telemetry { order: 6; }
-      #sec-approaches { order: 7; }
+      #sec-approaches { order: 5; }
+      #sec-overview { order: 6; }
+      #sec-telemetry { order: 7; }
       #sec-distribution { order: 8; }
       #sec-status { order: 9; }
       .footer-bar { order: 10; }
       .panel-bottom { order: 11; justify-content: center; }
       
       .nav-links { display: none; }
-      .table-wrapper { max-height: 250px; } /* Slightly shorter on mobile */
-      .approach-table th { background: var(--surface-solid); } /* Match mobile bg */
+      .stage-readout { display:none; }
+      .approach-card { padding:14px; }
     }
     
     /* Small Phone Scaling */
@@ -347,8 +390,15 @@
       .tm-score { font-size: 36px; }
       .ov-val { font-size: 20px; }
       .hero h2 { font-size: 26px; }
-      .approach-table td { font-size: 11px; }
+      .brand > span { display:none; }
+      .brand-mark { width:22px; height:22px; }
+      .system-status .system-feed { display:none; }
+      .approach-name { max-width:160px; }
       .legend { flex-wrap: wrap; justify-content: center; border-radius: 12px; gap: 16px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; }
     }
   </style>
 </head>
@@ -375,6 +425,7 @@
           </svg>
         </button>
         <div class="brand">
+          <div class="brand-mark" aria-hidden="true"></div>
           <h1>NEO THREAT INDEX</h1>
           <span>Automated NEO Intelligence</span>
         </div>
@@ -385,7 +436,9 @@
         <a href="#" data-target="sec-status">SYSTEM</a>
         <a href="#architecture" id="architecture-toggle">ARCHITECTURE</a>
       </nav>
-      <div class="system" style="font-family: var(--mono); color: var(--muted); font-size: 11px;">
+      <div class="system-status" aria-label="Data-feed status and UTC clock">
+        <span class="system-feed"><span id="top-status-dot" class="dot live"></span><span id="top-status-text">SYNCING</span></span>
+        <span class="system-divider" aria-hidden="true"></span>
         <span id="global-clock">00:00:00 UTC</span>
       </div>
     </header>
@@ -397,8 +450,13 @@
     <aside class="panel-left">
       
       <div class="section hero" id="sec-hero">
-        <h2>Orbital<br>Intelligence</h2>
+        <div class="hero-kicker"><span class="dot live"></span>EARTH ORBIT / NEO OPERATIONS</div>
+        <h2>Orbital<br><span>Intelligence</span></h2>
         <p>Periodically refreshed Near-Earth Object intelligence. NASA telemetry is validated, normalized and classified by an n8n-orchestrated prototype risk heuristic.</p>
+        <div class="hero-readout">
+          <span>ORCHESTRATION PATH</span>
+          <strong>NASA NEOws → n8n → MISSION DISPLAY</strong>
+        </div>
       </div>
       
       <div class="section" id="sec-overview">
@@ -432,19 +490,8 @@
       
       <div class="section" id="sec-approaches">
         <h3 class="section-header">Today's Three Closest NASA Approaches</h3>
-        <div class="table-wrapper">
-          <table class="approach-table">
-            <thead>
-              <tr>
-                <th>Object</th>
-                <th>Size</th>
-                <th class="td-time">Approach</th>
-              </tr>
-            </thead>
-            <tbody id="approach-list">
-              <!-- Filled by JS -->
-            </tbody>
-          </table>
+        <div id="approach-list" class="approach-list" aria-label="Closest Near-Earth Object approaches">
+          <!-- Filled by JS -->
         </div>
       </div>
       
@@ -484,6 +531,12 @@
       </div>
       
     </aside>
+
+    <section class="stage-readout" aria-live="polite" aria-label="Selected close-approach summary">
+      <div class="stage-eyebrow">LIVE CLOSE-APPROACH CORRIDOR</div>
+      <strong class="stage-name" id="stage-name">AWAITING TELEMETRY</strong>
+      <div class="stage-metric"><span>MISS DISTANCE</span><strong id="stage-distance">--</strong></div>
+    </section>
 
     <!-- Right Panel: Telemetry & Threat Score -->
     <aside class="panel-right">
@@ -839,6 +892,8 @@
       const isOk = /ONLINE|OPERATIONAL|SUCCESS/i.test(statusStr) && !stale;
       $("sys-feed-txt").innerText = stale ? "STALE DATA" : (isOk ? "OPERATIONAL" : statusStr);
       $("sys-feed-dot").className = `dot ${stale ? 'stale' : isOk ? 'live' : 'error'}`;
+      if ($("top-status-text")) $("top-status-text").innerText = stale ? "STALE" : (isOk ? "LIVE FEED" : "CHECK FEED");
+      if ($("top-status-dot")) $("top-status-dot").className = `dot ${stale ? 'stale' : isOk ? 'live' : 'error'}`;
       const d = generated || state.lastFetchedAt;
       if (d) $("sys-sync").innerText = `${d.toISOString().replace("T", " ").slice(0, 16)} UTC`;
       if ($("sys-age")) $("sys-age").innerText = ageMs === null ? "UNKNOWN" : ageMs < 3600000 ? `${Math.max(0, Math.floor(ageMs / 60000))}m` : `${Math.floor(ageMs / 3600000)}h`;
@@ -898,23 +953,32 @@
         $("tel-select").dataset.bound = "true";
       }
 
-      // 4. Close Approach Table (Shows all objects now, wrapped in scrollable container)
+      // 4. Closest approach mission cards
       const sorted = [...state.asteroids].sort((a,b) => a.distance - b.distance);
       let rowsHTML = '';
-      sorted.forEach(ast => {
+      sorted.forEach((ast, position) => {
+        const cardColor = ast.threatCategory === "HIGH" ? "var(--critical)" : `var(--${ast.threatCategory.toLowerCase()})`;
+        const distanceLabel = ast.distance >= 1e6 ? `${(ast.distance / 1e6).toFixed(2)} M km` : `${Math.round(ast.distance).toLocaleString()} km`;
+        const approachLabel = String(ast.approachStr).replace(" ", " · ");
         rowsHTML += `
-          <tr data-id="${ast.id}" class="${ast.id === state.selectedIndex ? 'active' : ''}">
-            <td class="td-obj">${ast.hazardous ? '<span style="color:var(--error);">⚠️</span> ' : ''}${ast.name}</td>
-            <td>${Math.round(ast.diameter)}m</td>
-            <td class="td-time">${ast.approachStr}</td>
-          </tr>`;
+          <button type="button" data-id="${ast.id}" class="approach-card ${ast.id === state.selectedIndex ? 'active' : ''}" style="--card-accent:${cardColor}" aria-pressed="${ast.id === state.selectedIndex ? 'true' : 'false'}" aria-label="Select ${ast.name}">
+            <span class="approach-card-top">
+              <span class="approach-rank">${String(position + 1).padStart(2, "0")} / ${String(sorted.length).padStart(2, "0")}</span>
+              <span class="approach-name">${ast.hazardous ? '⚠ ' : ''}${ast.name}</span>
+              <span class="approach-chip">${ast.threatCategory}</span>
+            </span>
+            <span class="approach-card-bottom">
+              <span class="approach-metric"><span>Miss distance</span><strong>${distanceLabel}</strong></span>
+              <span class="approach-metric"><span>Approach</span><strong>${approachLabel}</strong></span>
+            </span>
+          </button>`;
       });
       $("approach-list").innerHTML = rowsHTML;
       
       // Bind clicks
-      document.querySelectorAll('#approach-list tr').forEach(tr => {
-        tr.addEventListener('click', () => {
-          selectAsteroid(parseInt(tr.getAttribute('data-id')));
+      document.querySelectorAll('#approach-list [data-id]').forEach(card => {
+        card.addEventListener('click', () => {
+          selectAsteroid(parseInt(card.getAttribute('data-id')));
           // On mobile, scroll down to the telemetry panel smoothly
           if (window.innerWidth <= 900) {
             $("sec-telemetry").scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -936,6 +1000,9 @@
         $("tel-dist").innerHTML = "--";
         $("tel-time").innerHTML = "--";
         $("tel-assess").innerText = "Select an object from the feed or orbital map to view detailed telemetry.";
+        if ($("stage-name")) $("stage-name").innerText = "AWAITING TELEMETRY";
+        if ($("stage-distance")) $("stage-distance").innerText = "--";
+        document.documentElement.style.setProperty("--score-angle", "0deg");
         $("astLabel").style.display = "none";
         updateThreeJSSelection();
         return;
@@ -948,8 +1015,10 @@
       document.body.classList.toggle('danger-mode', ast.threatCategory === "HIGH");
       
       // Update Table Highlight
-      document.querySelectorAll('#approach-list tr').forEach(tr => {
-        tr.classList.toggle('active', parseInt(tr.getAttribute('data-id')) === index);
+      document.querySelectorAll('#approach-list [data-id]').forEach(card => {
+        const active = parseInt(card.getAttribute('data-id')) === index;
+        card.classList.toggle('active', active);
+        card.setAttribute('aria-pressed', String(active));
       });
 
       // Update Telemetry
@@ -961,11 +1030,14 @@
       $("tel-assess").innerText = ast.assessment || deterministicAssessment(ast);
       $("tel-factors").innerText = `Potentially hazardous: +${ast.factors.hazardous}\nProximity: +${ast.factors.proximity}\nDiameter: +${ast.factors.diameter}\nVelocity: +${ast.factors.velocity}\nFinal classification: ${ast.threatCategory}`;
       $("tel-provenance").innerHTML = `SOURCE: ${ast.source} · PROCESSED BY: ${ast.processedBy} · RISK MODEL: Prototype NEO Threat Index${ast.nasaUrl ? ` · <a href="${ast.nasaUrl}" target="_blank" rel="noopener" style="color:var(--accent)">NASA/JPL reference</a>` : ''}`;
+      if ($("stage-name")) $("stage-name").innerText = ast.name;
+      if ($("stage-distance")) $("stage-distance").innerText = ast.distance >= 1e6 ? `${(ast.distance / 1e6).toFixed(2)} M KM` : `${Math.round(ast.distance).toLocaleString()} KM`;
 
       // Update Threat Score
       $("ts-score").innerText = `${Math.round(ast.threatScore)}/100`;
       $("ts-class").innerText = ast.threatCategory;
       $("ts-class").style.color = ast.threatCategory === "HIGH" ? "var(--critical)" : `var(--${ast.threatCategory.toLowerCase()})`;
+      document.documentElement.style.setProperty("--score-angle", `${Math.round(ast.threatScore * 3.6)}deg`);
 
       // Update 3D Selection
       updateThreeJSSelection();
