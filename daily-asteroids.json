@@ -2,15 +2,79 @@
   "metadata": {
     "schema_version": "3.0",
     "pipeline_status": "OPERATIONAL",
-    "generated_at": "2026-09-04T00:00:00Z",
+    "generated_at": "2026-09-04T15:12:05.507Z",
     "schedule": "n8n / every 12 hours",
     "source": "NASA NeoWs",
     "processed_by": "n8n",
-    "risk_model": "Prototype NEO Threat Index"
+    "risk_model": "Prototype NEO Threat Index",
+    "rejected_records": 0
   },
   "asteroids": [
-    { "id": "2015-DM215", "name": "(2015 DM215)", "diameter_meters": 86, "velocity_kmh": 51137, "miss_distance_km": 16494855, "hazardous": false, "approach_date": "2026-09-04", "source": "NASA NeoWs", "processed_by": "n8n", "assessment": "Automated assessment: a 86 m object at 16.49 million km. The prototype heuristic places it in the LOW band.", "nasa_jpl_url": "https://cneos.jpl.nasa.gov/ca/" },
-    { "id": "2017-QB35", "name": "(2017 QB35)", "diameter_meters": 8, "velocity_kmh": 32076, "miss_distance_km": 27431274, "hazardous": false, "approach_date": "2026-09-04", "source": "NASA NeoWs", "processed_by": "n8n", "assessment": "Automated assessment: a compact object with a distant recorded approach. The prototype heuristic places it in the LOW band.", "nasa_jpl_url": "https://cneos.jpl.nasa.gov/ca/" },
-    { "id": "2013-QF11", "name": "(2013 QF11)", "diameter_meters": 71, "velocity_kmh": 64496, "miss_distance_km": 34921102, "hazardous": false, "approach_date": "2026-09-04", "source": "NASA NeoWs", "processed_by": "n8n", "assessment": "Automated assessment: higher relative velocity is offset by a very distant recorded approach. The prototype heuristic places it in the LOW band.", "nasa_jpl_url": "https://cneos.jpl.nasa.gov/ca/" }
+    {
+      "id": "3752409",
+      "name": "(2016 HF2)",
+      "diameter_meters": 25.9144870499,
+      "velocity_kmh": 65981.1548706574,
+      "miss_distance_km": 64651536.68774869,
+      "hazardous": false,
+      "approach_date": "2026-Sep-04 18:48",
+      "orbiting_body": "Earth",
+      "nasa_jpl_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3752409",
+      "source": "NASA NeoWs",
+      "processed_by": "n8n",
+      "threat_score": 16,
+      "risk_level": "LOW",
+      "risk_factors": {
+        "hazardous": 0,
+        "proximity": 2,
+        "diameter": 4,
+        "velocity": 10
+      },
+      "assessment": "Automated assessment: LOW under the Prototype NEO Threat Index."
+    },
+    {
+      "id": "3836756",
+      "name": "(2018 XF2)",
+      "diameter_meters": 23.63429308585,
+      "velocity_kmh": 77774.7616795534,
+      "miss_distance_km": 57724743.07485812,
+      "hazardous": false,
+      "approach_date": "2026-Sep-04 23:20",
+      "orbiting_body": "Earth",
+      "nasa_jpl_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3836756",
+      "source": "NASA NeoWs",
+      "processed_by": "n8n",
+      "threat_score": 16,
+      "risk_level": "LOW",
+      "risk_factors": {
+        "hazardous": 0,
+        "proximity": 2,
+        "diameter": 4,
+        "velocity": 10
+      },
+      "assessment": "Automated assessment: LOW under the Prototype NEO Threat Index."
+    },
+    {
+      "id": "3843480",
+      "name": "(2019 PM)",
+      "diameter_meters": 85.8109315948,
+      "velocity_kmh": 47969.2180481371,
+      "miss_distance_km": 34733102.96759319,
+      "hazardous": false,
+      "approach_date": "2026-Sep-04 15:20",
+      "orbiting_body": "Earth",
+      "nasa_jpl_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3843480",
+      "source": "NASA NeoWs",
+      "processed_by": "n8n",
+      "threat_score": 18,
+      "risk_level": "LOW",
+      "risk_factors": {
+        "hazardous": 0,
+        "proximity": 8,
+        "diameter": 4,
+        "velocity": 6
+      },
+      "assessment": "Automated assessment: LOW under the Prototype NEO Threat Index."
+    }
   ]
 }
