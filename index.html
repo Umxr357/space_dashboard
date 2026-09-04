@@ -592,7 +592,9 @@
     /* ==========================================================================
        CONFIGURATION & CONSTANTS
        ========================================================================== */
-    const FEED_URL = "https://raw.githubusercontent.com/Umxr357/space_dashboard/main/daily-asteroids.json";
+    // GitHub Raw is CDN-cached even when a query string changes. The Contents API gives the dashboard
+    // the current committed n8n artifact while keeping the lightweight GitHub-backed prototype design.
+    const FEED_URL = "https://api.github.com/repos/Umxr357/space_dashboard/contents/daily-asteroids.json?ref=main";
     const REFRESH_INTERVAL_MS = 5 * 60 * 1000; 
     const STALE_THRESHOLD_MS = 26 * 60 * 60 * 1000;
     
@@ -636,6 +638,11 @@
        UTILITIES
        ========================================================================== */
     const $ = id => document.getElementById(id);
+
+    function decodeGitHubContent(content) {
+      const bytes = Uint8Array.from(atob(content.replace(/\s/g, "")), char => char.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
     
     function simpleHash(str) {
       let hash = 0;
@@ -727,7 +734,10 @@
         clearTimeout(timeout);
         
         if (!res.ok) throw new Error("HTTP " + res.status);
-        const rawText = await res.text();
+        const responseBody = await res.json();
+        const rawText = responseBody.encoding === "base64" && responseBody.content
+          ? decodeGitHubContent(responseBody.content)
+          : JSON.stringify(responseBody);
         
         const hash = simpleHash(rawText);
         if (hash === state.lastDataHash) {
