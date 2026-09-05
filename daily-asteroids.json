@@ -2,7 +2,7 @@
   "metadata": {
     "schema_version": "3.0",
     "pipeline_status": "OPERATIONAL",
-    "generated_at": "2026-09-04T15:25:03.947Z",
+    "generated_at": "2026-09-05T02:30:49.911Z",
     "schedule": "n8n / every 12 hours",
     "source": "NASA NeoWs",
     "processed_by": "n8n",
@@ -12,37 +12,37 @@
   },
   "asteroids": [
     {
-      "id": "3843480",
-      "name": "(2019 PM)",
-      "diameter_meters": 85.8109315948,
-      "velocity_kmh": 47969.2180481371,
-      "miss_distance_km": 34733102.96759319,
+      "id": "3797715",
+      "name": "(2018 BX)",
+      "diameter_meters": 6.50942484,
+      "velocity_kmh": 29040.4308728702,
+      "miss_distance_km": 45436725.96726249,
       "hazardous": false,
-      "approach_date": "2026-Sep-04 15:20",
+      "approach_date": "2026-Sep-05 19:22",
       "orbiting_body": "Earth",
-      "nasa_jpl_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3843480",
+      "nasa_jpl_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3797715",
       "source": "NASA NeoWs",
       "processed_by": "n8n",
-      "threat_score": 18,
+      "threat_score": 8,
       "risk_level": "LOW",
       "risk_factors": {
         "hazardous": 0,
-        "proximity": 8,
+        "proximity": 2,
         "diameter": 4,
-        "velocity": 6
+        "velocity": 2
       },
       "assessment": "Automated assessment: LOW under the Prototype NEO Threat Index."
     },
     {
-      "id": "3836756",
-      "name": "(2018 XF2)",
-      "diameter_meters": 23.63429308585,
-      "velocity_kmh": 77774.7616795534,
-      "miss_distance_km": 57724743.07485812,
+      "id": "3843735",
+      "name": "(2019 QL7)",
+      "diameter_meters": 20.1160458514,
+      "velocity_kmh": 75528.0190311059,
+      "miss_distance_km": 45508479.34394567,
       "hazardous": false,
-      "approach_date": "2026-Sep-04 23:20",
+      "approach_date": "2026-Sep-05 20:21",
       "orbiting_body": "Earth",
-      "nasa_jpl_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3836756",
+      "nasa_jpl_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3843735",
       "source": "NASA NeoWs",
       "processed_by": "n8n",
       "threat_score": 16,
@@ -56,26 +56,26 @@
       "assessment": "Automated assessment: LOW under the Prototype NEO Threat Index."
     },
     {
-      "id": "3752409",
-      "name": "(2016 HF2)",
-      "diameter_meters": 25.9144870499,
-      "velocity_kmh": 65981.1548706574,
-      "miss_distance_km": 64651536.68774869,
-      "hazardous": false,
-      "approach_date": "2026-Sep-04 18:48",
+      "id": "3330049",
+      "name": "(2006 HC2)",
+      "diameter_meters": 190.3455012433,
+      "velocity_kmh": 78249.1417267734,
+      "miss_distance_km": 52936207.73756135,
+      "hazardous": true,
+      "approach_date": "2026-Sep-05 07:07",
       "orbiting_body": "Earth",
-      "nasa_jpl_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3752409",
+      "nasa_jpl_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3330049",
       "source": "NASA NeoWs",
       "processed_by": "n8n",
-      "threat_score": 16,
-      "risk_level": "LOW",
+      "threat_score": 47,
+      "risk_level": "MODERATE",
       "risk_factors": {
-        "hazardous": 0,
+        "hazardous": 25,
         "proximity": 2,
-        "diameter": 4,
+        "diameter": 10,
         "velocity": 10
       },
-      "assessment": "Automated assessment: LOW under the Prototype NEO Threat Index."
+      "assessment": "Automated assessment: MODERATE under the Prototype NEO Threat Index."
     }
   ]
 }
