@@ -1,92 +1,46 @@
-# NEO THREAT INDEX
+# NEO Solar System Atlas
 
-An autonomous, periodically refreshed Near-Earth Object intelligence dashboard: n8n converts raw NASA NeoWs telemetry into transparent, actionable prototype risk assessments.
+Single-file Three.js experience that expands the original NEO dashboard into an interactive solar-system atlas.
 
-## Live demo
+## Run
 
-[neo-threat-index.vercel.app](https://neo-threat-index.vercel.app/)
+Open index.html in a modern browser with internet access. The page loads Three.js and fonts from public CDNs. It opens on the Earth / NEO monitor. If the workflow feed cannot be reached, it displays an unavailable state or retains previously fetched records labelled as cached.
 
-## What it does
+## What the display means
 
-The dashboard presents the latest processed NEO feed in a mission-control interface with an interpretive Three.js flyby visualization. Each object has NASA-provided telemetry, a deterministic 0–100 threat index, provenance, freshness information, and a concise automated assessment.
+- Planet positions, orbital radii, sizes, belts, and object trajectories are schematic display data, not a real-time ephemeris or a scale model.
+- The solar-system view includes the Sun, eight planets, Earth’s Moon, Ceres, Pluto, the asteroid belt, and the Kuiper belt.
+- NEO feed values are treated as unverified external input. The interface does not make safety, impact, or mission-critical claims from them.
 
-This is a prototype prioritisation tool—not an official NASA planetary-defense system or an orbital-propagation engine.
+## Controls
 
-## Why n8n?
+- Drag to orbit, scroll or pinch to zoom, and click a point in the scene or catalog to inspect it.
+- Use Solar system and NEO field to change the displayed dataset.
+- Reload feed retries the optional external NEO source.
+- Clicking Earth in the solar-system view opens the Earth monitor and refreshes the original workflow JSON feed. Selecting a NEO shows velocity, miss distance, diameter, hazard flag, close-approach date when supplied, and the workflow assessment.
+- The original public workflow feed is connected. The header shows the feed's supplied update timestamp, rather than treating the time of a page refresh as a new NASA observation.
 
-n8n is the orchestration and intelligence layer. It schedules acquisition, retrieves NASA telemetry, rejects malformed records, normalizes a stable dashboard schema, invokes the deterministic threat engine, routes elevated events to an alert branch, and publishes an auditable JSON artifact for the frontend. A cron script could fetch data, but would not provide the same visual workflow, conditional branches, credential handling, retries, execution logs, or easy extension to notification providers.
+## Scene-first interface
 
-```mermaid
-flowchart LR
-  NASA[NASA NeoWs] --> N[n8n Scheduler + Fetch]
-  N --> V[Validate response]
-  V --> X[Normalize telemetry]
-  X --> T[Deterministic Threat Index]
-  T --> R{Elevated / High?}
-  R -->|Yes| A[Webhook-compatible alert record]
-  R -->|No| P[Package dashboard data]
-  A --> P
-  P --> G[GitHub JSON persistence]
-  G --> D[NEO Threat Index dashboard]
-  N -. bounded retry / error workflow .-> E[Observable failure]
-```
+- Earth and Solar System use compact text navigation. Sky Events opens a city-based solar eclipse explorer.
+- The search icon (or slash key) opens a searchable list. Object names are no longer displayed as a permanent wall of buttons.
+- Click an object to inspect it. Close the inspector, click empty space, or press Escape to deselect. Dragging the scene does not select an object.
+- The desktop inspector reserves its own screen space; on phones it becomes a scrollable bottom sheet. The 3D viewport resizes so it cannot draw behind the inspector.
+- Reset view restores the overview. User orbit/zoom input interrupts camera transitions instead of being pulled back to the selection.
+- Verified in a browser: NASA feed loading, search filtering, object details, panel dismissal, Earth navigation from the solar-system catalog, and a 390px mobile layout.
 
-## Threat scoring
+## Accessibility and performance
 
-**Prototype NEO Threat Index** is deterministic and explainable. It is not a NASA risk score.
+- Keyboard-focusable controls, live selection announcements, semantic buttons, and reduced-motion support are included.
+- The renderer caps device pixel ratio at 2, pauses while the page is hidden, and respects prefers-reduced-motion.
 
-| Feature | Points |
-| --- | --- |
-| NASA potentially-hazardous flag | +25 or 0 |
-| Miss distance | +35 (≤1 LD), +28 (≤5), +18 (≤20), +8 (≤100), otherwise +2 |
-| Estimated diameter | +25 (≥1000 m), +18 (≥300), +10 (≥100), otherwise +4 |
-| Relative velocity | +15 (≥100,000 km/h), +10 (≥60,000), +6 (≥30,000), otherwise +2 |
+## Sky Events: solar eclipse explorer
 
-The capped sum maps to LOW (0–24), MODERATE (25–49), ELEVATED (50–74), or HIGH (75–100). The dashboard shows the exact component values for a selected object.
-
-## Data contract and provenance
-
-`daily-asteroids.json` is the prototype persistence layer. Its top-level `metadata` records generated time, pipeline state, cadence, source, processor, and risk-model name. Each asteroid records its NASA source, n8n processor, original NASA/JPL reference when available, and derived risk fields. GitHub is intentionally used as an auditable zero-backend distribution layer for this hackathon build.
-
-## Simulation mode
-
-Choose **ARCHITECTURE → SIMULATE THREAT EVENT**. It creates a clearly labelled `source: "SIMULATION"` event with elevated parameters and exercises the same frontend scoring and alert-story path. It never writes to or disguises itself as the NASA dataset.
-
-## Reliability and failure behavior
-
-- HTTP retrieval has a 15-second timeout and three bounded attempts in n8n.
-- Validation rejects malformed records; no valid records produces an observable workflow failure rather than corrupt JSON.
-- The frontend times out feed retrieval, displays `ERROR`, and flags data as `STALE DATA` after 26 hours.
-- The workflow currently uses a deterministic assessment fallback. If a credentialed LLM explanation node is added later, it must receive structured values only and must not determine risk; a failure must retain this fallback.
-- The n8n export imports inactive by design. Configure credentials and explicitly activate it in the hosting n8n instance.
-
-## Run locally
-
-This is a static app. Serve the repository with any static server, for example:
-
-```sh
-npx serve .
-```
-
-Open the served `index.html`. It fetches the published GitHub feed; use a local server rather than `file://` so module imports behave correctly.
-
-## Import the n8n workflow
-
-1. Import `neo-pipeline.json` into n8n.
-2. Create a NASA API credential/environment value named `NASA_API_KEY`; do not use a committed key.
-3. Configure GitHub credentials in n8n for the persistence node.
-4. Optionally connect the alert output to Slack, email, Discord, or a webhook with n8n-managed credentials.
-5. Test with a manual execution, inspect rejected records, then activate the schedule.
-
-## Security
-
-No tokens, API keys, OAuth credentials, webhook secrets, or private endpoints belong in this repository. Use n8n Credentials and environment variables. The included NASA sample is public, static prototype data.
-
-## Limitations and production path
-
-- NASA’s hazardous flag and this heuristic do not constitute an impact prediction.
-- The 3D visualization is an interpretive representation of relative flyby telemetry, not precise orbital propagation.
-- The feed is periodically refreshed, not real-time.
-- GitHub JSON is appropriate for a demo; production would retain n8n orchestration while using PostgreSQL/Supabase, an API/cache layer, monitoring, and access controls.
-
-See [Judge Guide](docs/JUDGE_GUIDE.md) and [Demo Flow](docs/DEMO.md) for the hackathon presentation.
+- Twenty curated cities, with country/city selectors, saved preference and IANA local timezones.
+- Searches the next ten years for a solar eclipse with a remaining above-horizon phase at the city centre. Includes ongoing eclipses, skips expired events, and handles sunrise/sunset. Local partial/annular/total classification is not the global eclipse classification.
+- Shows contact times, peak obscuration (covered area, not magnitude), solar altitude, a time-scrubbable disc preview and an ICS calendar download. A peak below the horizon is explicitly labelled rather than presented as visible coverage.
+- Predictions use Astronomy Engine 2.1.19, loaded from jsDelivr inside a cancellable worker. Internet is required to load the calculation library. No new NASA key or n8n workflow is needed. Failures have an explicit retry state.
+- Results are calculated on demand, cached in memory and recalculated when their visible window expires. These are calculated predictions, not live observations or weather forecasts. Coordinates are approximate city centres at sea level; terrain, buildings and clouds are excluded. Horizon crossings use apparent Sun-centre altitude, refined to under a second; displayed times remain approximate.
+- NASA NEO data and its existing n8n pipeline are unchanged. Sky Events uses a separate source and labels it accordingly.
+- Regression tests: download the pinned package's `astronomy.js`, then run `node tests/sky-events.test.cjs <downloaded-file-path>`. Tests cover all cities, London 2027 and Dallas 2024 NASA reference timings, sunset visibility, ongoing/expired events, timezone conversion and calendar formatting.
+- Reference tables: [NASA London](https://eclipse.gsfc.nasa.gov/SEcirc/SEcircEU/LondonGBR1%2B21.html), [NASA Dallas 2024](https://science.nasa.gov/eclipses/future-eclipses/eclipse-2024/where-when/). Always follow [NASA solar viewing guidance](https://science.nasa.gov/eclipses/safety/).

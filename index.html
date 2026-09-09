@@ -3,1451 +3,921 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#030303">
-  <title>NEO THREAT INDEX | Operational Intelligence</title>
-  
+  <meta name="theme-color" content="#000000">
+  <title>NEO Threat Index</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script type="importmap">
   {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
   </script>
-  
   <style>
-    :root {
-      --bg: #030303;
-      --surface: rgba(10, 10, 12, 0.75);
-      --surface-solid: rgba(10, 10, 12, 0.95);
-      --panel-border: #222;
-      --line: rgba(255, 255, 255, 0.1);
-      --text: #d4d4d4;
-      --muted: #737373;
-      --dim: #404040;
-      --white: #ffffff;
-      
-      --accent: #00ffff;
-      --live: #00ff88;
-      --stale: #ffd700;
-      --error: #ff3366;
-      
-      --low: #00ff88;
-      --moderate: #ffd700;
-      --watch: #ffd700;
-      --elevated: #ff8800;
-      --high: #ff3366;
-      --critical: #ff3366;
-
-      --sans: 'Inter', sans-serif;
-      --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
-      --score-angle: 65deg;
-    }
-    
-    * { box-sizing: border-box; }
-    
-    html, body {
-      width: 100%; height: 100%; margin: 0; background:
-        radial-gradient(circle at 74% 22%, rgba(0, 255, 255, 0.075), transparent 24%),
-        radial-gradient(circle at 21% 82%, rgba(40, 70, 255, 0.07), transparent 30%),
-        var(--bg); color: var(--text);
-      font-family: var(--sans); overflow: hidden; -webkit-font-smoothing: antialiased;
-    }
-    body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .18;
-      background-image: radial-gradient(rgba(255,255,255,.36) .45px, transparent .6px); background-size: 5px 5px; mix-blend-mode: soft-light; }
-    
-    /* 3D Canvas Background */
-    #space { position: fixed; inset: 0; z-index: 0; }
-    #space canvas { display: block; width: 100%; height: 100%; cursor: grab; }
-    #space canvas:active { cursor: grabbing; }
-
-    /* Aggressive Aerospace Grid */
-    .grid-overlay {
-      position: fixed; inset: 0; z-index: 1; pointer-events: none;
-      background-image:
-        linear-gradient(rgba(75, 245, 255, 0.055) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(75, 245, 255, 0.055) 1px, transparent 1px);
-      background-size: 50px 50px;
-      background-position: center center;
-    }
-    .grid-overlay::before {
-      content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: min(52vw, 620px); height: min(52vw, 620px); border: 1px dashed rgba(0,255,255,0.12); border-radius: 50%;
-      box-shadow: 0 0 90px rgba(0,255,255,.035), inset 0 0 75px rgba(0,255,255,.025);
-    }
-    .grid-overlay::after {
-      content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 54px; height: 54px; border-radius: 50%;
-      border: 1px solid rgba(0,255,255,.3); box-shadow: 0 0 24px rgba(0,255,255,.18);
-    }
-    
-    /* CRT Scanlines for Hazard Alert */
-    .scanlines {
-      position: fixed; inset: 0; z-index: 9998; pointer-events: none;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                  linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-      background-size: 100% 4px, 3px 100%;
-      opacity: 0; transition: opacity 0.5s ease;
-    }
-    
-    /* Danger Mode Activated */
-    body.danger-mode .scanlines { opacity: .12; }
-    
-    body.danger-mode::after {
-      content: ""; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
-      box-shadow: inset 0 0 0px rgba(255, 0, 0, 0);
-      animation: dangerPulse 2.2s infinite alternate ease-in-out;
-    }
-    
-    @keyframes dangerPulse {
-      0% { box-shadow: inset 0 0 32px rgba(255, 51, 102, 0.07); }
-      100% { box-shadow: inset 0 0 88px rgba(255, 51, 102, 0.16), inset 0 0 16px rgba(255, 51, 102, 0.22); }
-    }
-    
-    body.danger-mode #sec-threat-score, body.danger-mode #sec-telemetry {
-      animation: containerGlitch 3s infinite;
-      border-color: rgba(255, 51, 102, 0.4) !important;
-      background: rgba(255, 51, 102, 0.05) !important;
-    }
-    
-    body.danger-mode #ts-score, body.danger-mode #ts-class {
-      color: var(--error) !important;
-      text-shadow: 0 0 15px rgba(255, 51, 102, 0.8);
-    }
-    
-    @keyframes containerGlitch {
-      0%, 94%, 100% { transform: translate(0, 0); filter: none; }
-      95% { transform: translate(-2px, 1px); filter: contrast(120%) drop-shadow(2px 0px rgba(255,0,0,0.5)); }
-      97% { transform: translate(2px, -1px); filter: contrast(120%) hue-rotate(-10deg) drop-shadow(-2px 0px rgba(0,255,255,0.5)); }
-      99% { transform: translate(0px, 1px); filter: none; }
-    }
-    
-    /* Layout */
-    .hud {
-      position: absolute; inset: 0; z-index: 10; pointer-events: none;
-      display: grid; 
-      grid-template-columns: var(--sidebar-width, 365px) 1fr 345px;
-      grid-template-rows: 64px 1fr auto;
-      transition: grid-template-columns 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-    .hud.sidebar-closed { --sidebar-width: 0px; }
-    .hud > * { pointer-events: auto; }
-    
-    /* Mobile Canvas Window (Hidden on Desktop) */
-    .mobile-canvas-window { display: none; }
-
-    /* Top Navigation */
-    .topbar {
-      grid-column: 1 / -1; grid-row: 1; display: flex; align-items: center; justify-content: space-between;
-      padding: 0 32px; border-bottom: 1px solid rgba(130,255,255,.13);
-      background: linear-gradient(90deg, rgba(5,9,13,.96), rgba(4,8,13,.78) 54%, rgba(1,11,16,.94));
-      box-shadow: 0 12px 40px rgba(0,0,0,.18);
-    }
-    .icon-btn {
-      background: transparent; border: none; color: var(--muted); cursor: pointer;
-      padding: 8px; margin-right: 16px; border-radius: 4px; transition: all 0.2s;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .icon-btn:hover { color: var(--accent); background: rgba(0,255,255,.08); box-shadow: inset 0 0 0 1px rgba(0,255,255,.13); }
-    .brand { display: flex; align-items: center; gap: 14px; }
-    .brand-mark { position: relative; width: 25px; height: 25px; border: 1px solid rgba(0,255,255,.55); border-radius: 50%; box-shadow: 0 0 16px rgba(0,255,255,.22), inset 0 0 12px rgba(0,255,255,.1); }
-    .brand-mark::before, .brand-mark::after { content:""; position:absolute; inset:5px; border:1px solid rgba(0,255,255,.38); border-radius:50%; }
-    .brand-mark::after { inset:10px; background:var(--accent); border:0; box-shadow:0 0 10px var(--accent); }
-    .brand h1 { margin: 0; color: var(--white); font-size: 14px; font-weight: 700; letter-spacing: 0.14em; }
-    .brand span { color: #7d9298; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; border-left: 1px solid rgba(0,255,255,.2); padding-left: 14px; }
-    .nav-links { display: flex; gap: 24px; }
-    .nav-links a { color: var(--muted); text-decoration: none; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; transition: color 0.2s; }
-    .nav-links a { position: relative; padding: 6px 0; }
-    .nav-links a::after { content:""; position:absolute; left:0; right:100%; bottom:0; height:1px; background:var(--accent); transition:right .25s ease; }
-    .nav-links a:hover, .nav-links a.active { color: var(--white); }
-    .nav-links a:hover::after, .nav-links a.active::after { right:0; }
-    .system-status { display:flex; align-items:center; gap:10px; color:#90a9ae; font:500 10px var(--mono); letter-spacing:.08em; }
-    .system-status .system-feed { display:flex; align-items:center; gap:7px; padding:6px 9px; border:1px solid rgba(0,255,136,.16); background:rgba(0,255,136,.035); }
-    .system-divider { width:1px; height:18px; background:rgba(255,255,255,.11); }
-    
-    /* Left Panel (Scrollable Intelligence Feed) */
-    .panel-left {
-      width: 365px;
-      grid-column: 1; grid-row: 2 / -1; overflow-y: auto; overflow-x: hidden;
-      background: linear-gradient(180deg, rgba(8,13,17,.88), rgba(3,5,8,.78)); backdrop-filter: blur(18px); border-right: 1px solid rgba(130,255,255,.11);
-      display: flex; flex-direction: column;
-      transform: translateX(0);
-      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s;
-    }
-    .hud.sidebar-closed .panel-left {
-      transform: translateX(-100%);
-      opacity: 0;
-    }
-    .panel-left .hero { order:-2; }
-    .panel-left #sec-approaches { order:-1; }
-    
-    .panel-left::-webkit-scrollbar { width: 4px; }
-    .panel-left::-webkit-scrollbar-thumb { background: var(--dim); }
-    
-    /* Section Formatting */
-    .section { padding: 32px; border-bottom: 1px solid rgba(255,255,255,.075); }
-    .section-header { margin: 0 0 24px 0; font-size: 9px; font-weight: 700; color: #77939a; letter-spacing: 0.2em; text-transform: uppercase; display: flex; align-items: center; gap: 12px; }
-    .section-header::before { content:""; width:5px; height:5px; background:var(--accent); box-shadow:0 0 9px var(--accent); transform:rotate(45deg); }
-    .section-header::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(0,255,255,.24), transparent); }
-    
-    /* Hero */
-    .hero { padding-bottom: 26px; background: radial-gradient(circle at 0% 0%, rgba(0,255,255,.08), transparent 52%); }
-    .hero-kicker { display:flex; align-items:center; gap:8px; margin-bottom:15px; color:#85a7ad; font:700 9px var(--mono); letter-spacing:.16em; }
-    .hero-kicker .dot { width:7px; height:7px; animation: statusPulse 1.6s ease-in-out infinite; }
-    @keyframes statusPulse { 50% { opacity:.35; transform:scale(.72); } }
-    .hero h2 { margin: 0 0 14px; font-size: 35px; font-weight: 600; color: var(--white); letter-spacing: -0.055em; line-height: 1.02; text-wrap: balance; }
-    .hero h2 span { color:var(--accent); text-shadow:0 0 22px rgba(0,255,255,.22); }
-    .hero p { margin: 0; font-size: 12px; color: #89999e; line-height: 1.75; }
-    .hero-readout { margin-top:22px; padding-top:14px; border-top:1px solid rgba(0,255,255,.15); display:flex; flex-direction:column; gap:5px; }
-    .hero-readout span { font:700 8px var(--mono); color:#5d7378; letter-spacing:.16em; }
-    .hero-readout strong { font:600 10px var(--mono); color:#b7e4e7; letter-spacing:.08em; }
-    
-    /* Threat Overview Grid */
-    .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(121,255,255,.15); border: 1px solid rgba(121,255,255,.15); box-shadow: 0 16px 32px rgba(0,0,0,.15); }
-    .ov-card { background: linear-gradient(145deg, rgba(13,20,25,.94), rgba(4,7,10,.88)); padding: 20px; display: flex; flex-direction: column; justify-content: space-between; min-height:105px; transition: background .25s, transform .25s; }
-    .ov-card:hover { background:linear-gradient(145deg, rgba(12,35,40,.96), rgba(4,10,13,.94)); transform:translateY(-2px); }
-    .ov-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
-    .ov-val { font-family: var(--mono); font-size: 28px; font-weight: 600; color: var(--white); letter-spacing: -0.07em; text-shadow:0 0 18px rgba(255,255,255,.07); }
-    .ov-val.accent { color: var(--error); }
-    .ov-unit { font-size: 12px; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
-    
-    /* Threat Distribution */
-    .dist-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-    .dist-row:last-child { margin-bottom: 0; }
-    .dist-lbl { width: 65px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
-    .dist-bar-bg { flex: 1; height: 5px; background: rgba(255,255,255,.07); border-radius: 2px; overflow: hidden; }
-    .dist-bar-fill { height: 100%; transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow:0 0 10px currentColor; }
-    .dist-pct { width: 35px; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--white); }
-    
-    /* Today's close approaches: compact, selectable mission cards */
-    .approach-list { display:flex; flex-direction:column; gap:8px; }
-    .approach-card { --card-accent: var(--accent); position:relative; overflow:hidden; width:100%; padding:13px 14px; border:1px solid rgba(146,255,255,.11); background:linear-gradient(115deg,rgba(11,23,29,.74),rgba(3,8,12,.6)); color:var(--text); text-align:left; cursor:pointer; font-family:var(--sans); transition:transform .2s ease,border-color .2s ease,background .2s ease,box-shadow .2s ease; }
-    .approach-card::before { content:""; position:absolute; inset:0 auto 0 0; width:2px; background:var(--card-accent); opacity:.68; box-shadow:0 0 12px var(--card-accent); }
-    .approach-card:hover { transform:translateX(3px); border-color:var(--card-accent); background:linear-gradient(115deg,rgba(15,39,45,.9),rgba(3,12,16,.8)); }
-    .approach-card.active { border-color:var(--card-accent); box-shadow:0 8px 24px rgba(0,255,255,.12), inset 0 0 26px rgba(0,255,255,.06); background:linear-gradient(115deg,rgba(11,35,40,.96),rgba(3,12,16,.88)); }
-    .approach-card-top, .approach-card-bottom { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .approach-card-top { margin-bottom:9px; }
-    .approach-rank { color:var(--card-accent); font:700 10px var(--mono); letter-spacing:.12em; }
-    .approach-name { max-width:195px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--white); font:600 12px var(--mono); letter-spacing:-.025em; }
-    .approach-chip { padding:3px 6px; border:1px solid var(--card-accent); color:var(--card-accent); font:700 8px var(--mono); letter-spacing:.1em; opacity:.9; }
-    .approach-metric { display:flex; flex-direction:column; gap:3px; }
-    .approach-metric:last-child { align-items:flex-end; text-align:right; }
-    .approach-metric span { color:#688087; font:600 8px var(--mono); letter-spacing:.11em; text-transform:uppercase; }
-    .approach-metric strong { color:#c9e1e4; font:500 10px var(--mono); letter-spacing:-.03em; }
-    
-    /* Data Confidence & System Status */
-    .diag-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-    .diag-list li { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: .06em; padding:9px 10px; background:rgba(255,255,255,.025); border-left:1px solid rgba(0,255,255,.16); }
-    .diag-lbl { color: var(--muted); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
-    .diag-val { font-family: var(--mono); color: var(--white); }
-    
-    /* Right Panel (Object Telemetry) */
-    .panel-right {
-      grid-column: 3; grid-row: 2; margin: 32px 32px 0 0; display: flex; flex-direction: column; gap: 24px;
-      max-height: calc(100vh - 160px); pointer-events: none;
-    }
-    .panel-right > * { pointer-events: auto; }
-    
-    /* Threat Score Module */
-    .threat-module { position:relative; overflow:hidden; background: linear-gradient(135deg, rgba(10,18,23,.91), rgba(3,7,11,.82)); backdrop-filter: blur(18px); border: 1px solid rgba(132,255,255,.15); padding: 32px; transition: all .3s ease; box-shadow:0 18px 38px rgba(0,0,0,.22); }
-    .threat-module::after { content:""; position:absolute; top:0; left:0; width:76px; height:1px; background:linear-gradient(90deg,var(--accent),transparent); box-shadow:0 0 14px var(--accent); }
-    .tm-header { display: flex; justify-content: space-between; align-items: flex-start; }
-    .tm-title { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin: 0; }
-    .tm-score-container { position:relative; isolation:isolate; min-width:132px; min-height:86px; padding:16px 8px 0 0; text-align:right; }
-    .tm-score-container::before { content:""; position:absolute; inset:0 0 0 auto; width:86px; height:86px; z-index:-1; border-radius:50%; background:conic-gradient(var(--accent) var(--score-angle), rgba(0,255,255,.09) 0); -webkit-mask:radial-gradient(transparent 60%,#000 62%); mask:radial-gradient(transparent 60%,#000 62%); opacity:.78; }
-    .tm-score { font-family: var(--mono); font-size: 45px; font-weight: 700; color: var(--white); line-height: 1; letter-spacing: -0.08em; transition: color 0.3s; text-shadow:0 0 24px rgba(255,255,255,.13); }
-    .tm-class { font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 8px; transition: color 0.3s; }
-
-    /* The central stage preserves an unobstructed orbital focal point. */
-    .stage-readout { --stage-accent:var(--accent); position:relative; grid-column:2; grid-row:2; align-self:start; justify-self:center; margin-top:28px; min-width:250px; padding:12px 15px; pointer-events:none; text-align:center; border:1px solid rgba(130,255,255,.14); background:linear-gradient(180deg,rgba(4,14,19,.74),rgba(3,8,12,.31)); backdrop-filter:blur(12px); box-shadow:0 16px 46px rgba(0,0,0,.16); }
-    .stage-readout::before { content:""; position:absolute; top:0; left:50%; width:44px; height:1px; transform:translateX(-50%); background:var(--stage-accent); box-shadow:0 0 14px var(--stage-accent); }
-    .stage-readout.selected { animation:stagePulse .65s cubic-bezier(.2,.8,.2,1); }
-    @keyframes stagePulse { 0% { transform:translateY(-4px); border-color:var(--stage-accent); box-shadow:0 0 0 rgba(0,255,255,0); } 55% { transform:translateY(0); border-color:var(--stage-accent); box-shadow:0 0 34px rgba(0,255,255,.18); } 100% { border-color:rgba(130,255,255,.14); box-shadow:0 16px 46px rgba(0,0,0,.16); } }
-    .stage-eyebrow { color:#78a4a9; font:700 8px var(--mono); letter-spacing:.17em; }
-    .stage-name { display:block; margin:7px 0 9px; color:var(--white); font:600 15px var(--mono); letter-spacing:-.04em; text-shadow:0 0 18px rgba(255,255,255,.12); }
-    .stage-metric { display:flex; justify-content:center; align-items:center; gap:8px; color:#6f8b90; font:600 8px var(--mono); letter-spacing:.12em; }
-    .stage-metric strong { color:var(--stage-accent); font-size:10px; letter-spacing:-.03em; }
-    
-    /* Telemetry Grid & Selector */
-    .tel-selector { position: relative; margin: 0 0 20px 0; }
-    .tel-selector select {
-      appearance: none; -webkit-appearance: none;
-      width: 100%; background: rgba(0,0,0,.36); border: 1px solid rgba(130,255,255,.16);
-      color: var(--white); font-family: var(--mono); font-size: 16px; font-weight: 500;
-      padding: 12px 32px 12px 16px; border-radius: 0; cursor: pointer; outline: none;
-      transition: border-color 0.2s;
-    }
-    .tel-selector select:hover { border-color: rgba(0,255,255,.5); box-shadow:0 0 0 3px rgba(0,255,255,.04); }
-    .tel-selector select:focus { border-color: var(--accent); }
-    .tel-selector-arrow {
-      position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
-      pointer-events: none; color: var(--muted); font-size: 10px;
-    }
-    
-    .tel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(140,255,255,.13); border: 1px solid rgba(140,255,255,.13); }
-    .tel-cell { background: rgba(1,5,8,.68); padding: 16px; }
-    .tel-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
-    .tel-val { font-family: var(--mono); font-size: 16px; color: var(--text); }
-    .tel-val .unit { font-size: 10px; color: var(--dim); margin-left: 4px; letter-spacing: 0; }
-    
-    /* Bottom Center (Legend) */
-    .panel-bottom { grid-column: 2; grid-row: 3; padding: 0 0 32px 32px; display: flex; align-items: flex-end; pointer-events: none; }
-    .legend { display: flex; gap: 24px; background:rgba(5,12,16,.82); backdrop-filter: blur(14px); padding: 12px 24px; border:1px solid rgba(120,255,255,.17); border-radius: 100px; box-shadow:0 10px 30px rgba(0,0,0,.23); pointer-events:auto; }
-    .leg-item { display: flex; align-items: center; gap: 8px; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
-    .leg-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .leg-line { width: 16px; height: 1px; }
-    
-    /* Universal Status Dots */
-    .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; }
-    .dot.live { background: var(--live); box-shadow: 0 0 6px var(--live); }
-    .dot.stale { background: var(--stale); box-shadow: 0 0 6px var(--stale); }
-    .dot.error { background: var(--error); box-shadow: 0 0 6px var(--error); }
-    
-    /* Floating Labels (Three.js synced) */
-    .marker { position: fixed; top: 0; left: 0; z-index: 5; pointer-events: none; color: var(--white); text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
-    .marker-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border-bottom:1px solid rgba(0,255,255,.5); padding:5px 7px 4px; background:rgba(2,12,16,.8); box-shadow:0 0 18px rgba(0,255,255,.1); }
-    #astLabel .marker-title { position:relative; border-left:1px solid var(--accent); }
-    #astLabel .marker-title::before, #astLabel .marker-title::after { content:""; position:absolute; left:-7px; width:6px; height:6px; border-left:1px solid var(--accent); }
-    #astLabel .marker-title::before { top:-1px; border-top:1px solid var(--accent); }
-    #astLabel .marker-title::after { bottom:-1px; border-bottom:1px solid var(--accent); }
-    .marker-sub { font-family: var(--mono); font-size: 9px; color: var(--muted); margin-top: 4px; display: block; }
-    
-    /* Boot Sequence / Loader */
-    .boot-overlay { position: fixed; inset: 0; z-index: 9999; background:radial-gradient(circle at 50% 50%,rgba(0,255,255,.07),transparent 25%), var(--bg); display:flex; flex-direction:column; justify-content:center; padding:10vw; transition:opacity .8s ease; }
-    .boot-overlay::before { content:""; position:absolute; inset:0; opacity:.24; background:linear-gradient(rgba(0,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,255,.08) 1px,transparent 1px); background-size:44px 44px; }
-    .boot-overlay > * { position:relative; }
-    .boot-overlay.hidden { opacity: 0; pointer-events: none; }
-    .term-line { font-family: var(--mono); font-size: 13px; color: var(--muted); margin-bottom: 8px; }
-    .term-line.active { color: var(--accent); text-shadow:0 0 15px rgba(0,255,255,.35); }
-    .blink { animation: blink 1s step-end infinite; }
-    @keyframes blink { 50% { opacity: 0; } }
-
-    /* Target highlight animation */
-    @keyframes pulseHighlight {
-      0% { background-color: rgba(0, 255, 136, 0.15); }
-      100% { background-color: transparent; }
-    }
-    .pulse-target {
-      animation: pulseHighlight 1.2s ease-out;
-    }
-
-    /* Footer / Minimal Bottom Info */
-    .footer-bar { padding: 24px 32px; font-size: 9px; color: var(--dim); letter-spacing: 0.1em; display: flex; justify-content: space-between; }
-    
-    /* Responsive Design - Desktop Scaling */
-    @media (max-width: 1200px) {
-      .hud { grid-template-columns: var(--sidebar-width, 340px) 1fr 300px; }
-      .panel-left { width: 340px; }
-      .ov-val { font-size: 22px; }
-      .tm-score { font-size: 36px; }
-      .tel-val { font-size: 14px; }
-    }
-    
-    /* Responsive Design - Mobile Reordering */
-    @media (max-width: 900px) {
-      .hud { 
-        display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden;
-        background: transparent; pointer-events: auto;
-      }
-      .panel-left, .panel-right { display: contents; } /* Break out children */
-      
-      /* Viewport window allowing interaction with the fixed 3D canvas beneath */
-      .mobile-canvas-window {
-        display: block; order: 3; height: 40vh; width: 100%;
-        pointer-events: none; flex-shrink: 0;
-      }
-
-      /* Hide sections on mobile when sidebar is toggled off */
-      .hud.sidebar-closed .panel-left > .section,
-      .hud.sidebar-closed .panel-left > .footer-bar {
-         display: none !important;
-      }
-
-      /* Base styling overrides for all sections on mobile */
-      .section, .threat-module, .footer-bar, .panel-bottom {
-        background: var(--surface-solid) !important; 
-        backdrop-filter: blur(16px) !important;
-        border-right: none !important;
-        border-left: none !important;
-        border-radius: 0 !important;
-        margin: 0 !important;
-        padding: 24px 20px !important;
-        border-bottom: 1px solid var(--panel-border) !important;
-      }
-      
-      /* Explicit Mobile Ordering */
-      .topbar { order: 1; position: sticky; top: 0; z-index: 20; background: var(--surface-solid); backdrop-filter: blur(16px); }
-      #sec-threat-score { order: 2; padding: 20px !important; }
-      #sec-hero { order: 4; }
-      .panel-left #sec-approaches { order: 5; }
-      #sec-overview { order: 6; }
-      #sec-telemetry { order: 7; }
-      #sec-distribution { order: 8; }
-      #sec-status { order: 9; }
-      .footer-bar { order: 10; }
-      .panel-bottom { order: 11; justify-content: center; }
-      
-      .nav-links { display: none; }
-      .stage-readout { display:block; order:3; align-self:stretch; min-width:0; margin:-68px 20px 22px; padding:10px 12px; z-index:6; }
-      .stage-name { margin:5px 0 7px; font-size:13px; }
-      .approach-card { padding:14px; }
-      .panel-right { margin:0; max-height:none; width:100%; }
-      .panel-right > .threat-module { display:block; flex:0 0 auto; width:100%; min-height:0; max-height:none; overflow:visible; }
-      #sec-threat-score { min-height:126px; }
-      #sec-telemetry { min-height:420px; }
-    }
-    
-    /* Small Phone Scaling */
-    @media (max-width: 600px) {
-      .tm-score { font-size: 36px; }
-      .ov-val { font-size: 20px; }
-      .hero h2 { font-size: 26px; }
-      .brand > span { display:none; }
-      .brand-mark { width:22px; height:22px; }
-      .system-status .system-feed { display:none; }
-      .approach-name { max-width:160px; }
-      .legend { flex-wrap: wrap; justify-content: center; border-radius: 12px; gap: 16px; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; }
-    }
+    :root{--black:#000;--surface:#0a0a0a;--surface-hi:#111;--white:#fff;--near:#eaeaea;--muted:#a5a5a5;--dim:#737373;--line:#2a2a2a}
+    *{box-sizing:border-box}html,body{min-width:0;min-height:100%;margin:0;background:#000;color:var(--near);font-family:Inter,Arial,sans-serif}body{overflow-x:hidden}button{font:inherit}a{color:var(--near);text-underline-offset:3px}button:focus-visible,a:focus-visible{outline:2px solid var(--white);outline-offset:3px}
+    #space{position:fixed;inset:0;z-index:0;pointer-events:none}#space canvas{display:block;width:100%;height:100%;pointer-events:auto;cursor:grab}.app{position:relative;z-index:1;min-height:100vh;pointer-events:none}.topbar,.hero,.details,.mode-switch,.catalog,.telemetry{pointer-events:auto}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:78px;padding:15px clamp(16px,3vw,42px);border-bottom:1px solid var(--line);background:rgba(0,0,0,.82)}.label{margin:0;color:var(--muted);font-size:10px;font-weight:500;letter-spacing:.13em;text-transform:uppercase}.brand{margin:4px 0 0;color:var(--white);font-size:14px;font-weight:600;letter-spacing:.04em}.header-right{display:flex;align-items:center;gap:13px}.status{color:var(--near);font:500 10px "JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase}.status:before{content:"";display:inline-block;width:6px;height:6px;margin:0 7px 1px 0;border:1px solid currentColor;border-radius:50%;vertical-align:middle}.quiet-button{min-height:42px;border:1px solid var(--line);border-radius:999px;background:rgba(0,0,0,.82);color:var(--near);padding:0 13px;font-size:10px;letter-spacing:.09em;text-transform:uppercase;cursor:pointer}.quiet-button:hover{border-color:var(--white);background:var(--surface-hi)}
+    .layout{display:grid;grid-template-columns:minmax(260px,1fr) minmax(300px,350px);grid-template-rows:auto 1fr auto;gap:clamp(24px,3vw,42px);min-height:calc(100vh - 78px);padding:clamp(28px,6vh,82px) clamp(16px,3vw,42px) 136px}.hero{grid-column:1;max-width:570px}.hero h1{margin:0;color:var(--white);font-size:clamp(50px,8vw,124px);font-weight:400;line-height:.82;letter-spacing:-.082em}.hero h1 span{display:block}.hero p{max-width:405px;margin:27px 0 0;color:var(--muted);font-size:13px;line-height:1.6}.hero .scene-limit{margin-top:18px;color:var(--dim);font:500 10px "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase}
+    .mode-switch{grid-column:1;display:flex;align-self:start;gap:8px}.mode{min-height:42px;border:1px solid var(--line);border-radius:999px;background:rgba(0,0,0,.72);color:var(--muted);padding:0 13px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}.mode:hover,.mode:focus-visible{border-color:var(--near);color:var(--white);outline:none}.mode[aria-pressed="true"]{border-color:var(--white);background:var(--surface-hi);color:var(--white)}
+    .details{grid-column:2;grid-row:1 / span 2;padding-left:20px;border-left:1px solid var(--line)}.details-top,.catalog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:23px}.chip{border:1px solid var(--line);border-radius:999px;padding:6px 9px;color:var(--near);font:500 9px "JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase}.name{margin:0;color:var(--white);font-size:clamp(28px,3vw,40px);font-weight:400;letter-spacing:-.055em}.subname{margin:8px 0 21px;color:var(--muted);font:11px "JetBrains Mono",monospace}.description{margin:0 0 22px;color:var(--muted);font-size:12px;line-height:1.58}.metrics{margin:0;border-top:1px solid var(--line)}.metric{display:flex;justify-content:space-between;gap:18px;padding:11px 0;border-bottom:1px solid var(--line)}.metric dt{color:var(--dim);font-size:10px;letter-spacing:.1em;text-transform:uppercase}.metric dd{margin:0;color:var(--near);font:12px "JetBrains Mono",monospace;text-align:right;font-variant-numeric:tabular-nums}.context{margin:21px 0 0;color:var(--muted);font-size:11px;line-height:1.55}.context strong{color:var(--near);font-weight:500}
+    .catalog{grid-column:1;align-self:end;max-width:760px;padding-top:15px;border-top:1px solid var(--line)}.catalog-head{margin-bottom:10px}.catalog-count{color:var(--dim);font:10px "JetBrains Mono",monospace}.catalog-list{display:flex;flex-wrap:wrap;gap:7px;max-height:190px;overflow:auto;padding-right:2px}.entity{display:flex;align-items:center;gap:7px;min-height:42px;border:1px solid var(--line);border-radius:999px;background:rgba(0,0,0,.68);color:var(--muted);padding:0 11px;font-size:10px;cursor:pointer}.entity:hover,.entity:focus-visible{border-color:var(--near);color:var(--white);outline:none}.entity[aria-pressed="true"]{border-color:var(--white);background:var(--surface-hi);color:var(--white)}.entity i{width:5px;height:5px;border:1px solid currentColor;border-radius:50%}.empty{color:var(--muted);font-size:12px;line-height:1.5}
+    .telemetry{position:absolute;right:clamp(16px,3vw,42px);bottom:27px;left:clamp(16px,3vw,42px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(0,0,0,.68)}.telemetry div{min-width:0;padding:13px 12px 14px 0}.telemetry div+div{padding-left:14px;border-left:1px solid var(--line)}.telemetry strong{display:block;overflow:hidden;margin-top:7px;color:var(--white);font-size:12px;font-weight:500;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
+    .scene-label{position:fixed;z-index:2;display:none;pointer-events:none;transform:translate(12px,-50%);border-left:1px solid var(--near);padding-left:8px;color:var(--white);font-size:11px}.scene-label small{display:block;margin-top:3px;color:var(--muted);font:9px "JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase}.loader{position:fixed;z-index:5;inset:0;display:flex;align-items:center;justify-content:center;background:#000;transition:opacity .4s}.loader.done{opacity:0;pointer-events:none}.loader p{margin:0;color:var(--near);font:11px "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase}.loader i{display:block;width:48px;height:1px;margin:16px auto;background:var(--near);animation:load 1.25s ease-in-out infinite}@keyframes load{50%{transform:scaleX(.25);opacity:.4}}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+    @media(max-width:780px){.topbar{min-height:70px}.layout{display:flex;flex-direction:column;gap:29px;min-height:auto;padding:40px 16px 185px}.hero{max-width:460px}.hero h1{font-size:clamp(54px,17vw,88px)}.details,.catalog{width:100%;max-width:none;padding:16px 0 0;border-top:1px solid var(--line);border-left:0}.details{order:2}.mode-switch{order:1}.catalog{order:3}.catalog-list{max-height:260px}.telemetry{position:fixed;right:0;bottom:0;left:0;z-index:3;grid-template-columns:repeat(2,minmax(0,1fr));padding:0 16px;background:rgba(0,0,0,.95)}.telemetry div:nth-child(3),.telemetry div:nth-child(4){border-top:1px solid var(--line)}.telemetry div:nth-child(3){padding-left:0;border-left:0}.telemetry div:nth-child(2){border-left:1px solid var(--line)}.status{display:none}}
+    @media(max-width:430px){.topbar{padding:12px 14px}.header-right{gap:7px}.quiet-button{padding:0 10px}.layout{padding:31px 14px 196px}.hero h1{font-size:53px}.hero p{margin-top:20px}.details-top{margin-bottom:17px}.metrics{display:grid;grid-template-columns:1fr 1fr}.metric{display:block}.metric:nth-child(even){padding-left:10px;border-left:1px solid var(--line)}.metric dd{text-align:left;margin-top:5px}.telemetry{padding:0 14px}.telemetry strong{font-size:11px}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+    /* Scene-first shell: controls live at the edges, never over the globe. */
+    [hidden]{display:none!important}html,body{height:100%;overflow:hidden}.app{height:100dvh;min-height:0}
+    #space{top:78px;bottom:42px;right:0}.inspecting #space{right:370px}
+    .topbar{height:78px;min-height:0;padding:0 26px;gap:24px;background:#080b0ef2}.topbar .label{font-size:8px}.brand{font-size:12px;letter-spacing:.12em}
+    .layout{display:contents}.mode-switch{display:flex;align-self:auto;margin:auto;gap:26px}.mode{background:none!important;border:0;border-radius:0;padding:0;min-height:48px;text-transform:none;letter-spacing:0;font-size:12px;white-space:nowrap}.mode[aria-pressed="true"]{box-shadow:inset 0 -1px #a5d9df;color:#fff}
+    .header-right{gap:8px}.status{font-size:9px;letter-spacing:0;text-transform:none;color:#95a4ad;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.quiet-button,.icon-button{width:40px;height:44px;min-height:44px;display:inline-grid;place-items:center;border:0;border-radius:4px;background:transparent;color:#c5d0d6;padding:0;cursor:pointer}.quiet-button:hover,.icon-button:hover{background:#ffffff0d}.quiet-button svg,.icon-button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5}.quiet-button:disabled{opacity:.35}
+    .details{position:fixed;right:0;top:78px;bottom:42px;width:370px;padding:28px 24px;overflow:auto;background:#0c1015;border-left:1px solid #253039;z-index:4}.details-top{margin-bottom:25px}.chip{padding:0;border:0;font-size:8px;color:#89a5b6}.name{font-size:30px;overflow-wrap:anywhere}.description{color:#a2aeb7}.subname{font-size:10px;line-height:1.6}.metrics{margin-top:24px}.metric{display:flex}.metric dd{font-size:12px}.metric dt{font-size:9px}.context{font-size:10px;color:#80919d}.details .icon-button{margin:-10px -8px -10px 0}
+    .catalog{position:fixed;left:24px;top:92px;width:340px;max-width:calc(100vw - 48px);padding:18px;z-index:5;background:#0c1015fa;border:1px solid #29313a;border-radius:8px;box-shadow:0 20px 70px #0008}.catalog-head{margin-bottom:8px}.catalog-list{display:flex;flex-direction:column;flex-wrap:nowrap;gap:0;max-height:min(54vh,480px);overflow:auto;margin-top:12px;padding:0}.entity{flex:none;width:100%;min-height:46px;padding:10px 4px;border:0;border-bottom:1px solid #ffffff0a;border-radius:0;background:none;color:#a1b0ba;text-align:left;font-size:12px}.entity[aria-pressed="true"]{background:#17252e;color:#d9f3ff}.entity small{margin-left:auto;color:#6e8493;font:9px 'JetBrains Mono',monospace}.entity i{flex-shrink:0}.search-input{width:100%;border:0;border-bottom:1px solid #3a4a56;background:transparent;color:#fff;font:13px Inter,sans-serif;padding:14px 0;outline-offset:3px}.catalog-count{font-size:9px}
+    .telemetry{position:fixed;bottom:0;left:0;right:0;height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;border:0;border-top:1px solid #1b242b;background:#080b0e;z-index:6}.telemetry div{padding:0!important;border:0!important;display:flex;gap:10px;align-items:center}.telemetry .label{font-size:8px;letter-spacing:.06em}.telemetry strong{margin:0;font:9px 'JetBrains Mono',monospace;color:#84949e}.telemetry div:nth-child(2){display:none}.telemetry div:nth-child(3){max-width:40%}
+    .scene-hint{position:fixed;bottom:62px;left:26px;margin:0;color:#71818c;font:10px 'JetBrains Mono',monospace;pointer-events:none}.scene-label{z-index:2}.events-panel{position:fixed;z-index:5;top:100px;left:50%;transform:translateX(-50%);width:min(420px,calc(100vw - 32px));padding:28px;background:#0c1015;border:1px solid #29313a;border-radius:8px;pointer-events:auto}.events-panel h2{font-size:24px;font-weight:400}.events-panel p{font-size:13px;line-height:1.7;color:#91a2af}.events-panel .icon-button{float:right}
+    @media(max-width:950px){.topbar{padding:0 16px;gap:16px}.topbar .label,.status{display:none}.mode-switch{gap:18px}.inspecting #space{right:330px}.details{width:330px}.telemetry div:nth-child(3){display:none}}
+    @media(max-width:650px){.topbar{height:100px;flex-wrap:wrap;gap:0;align-content:center;justify-content:space-between}.brand{font-size:10px}.mode-switch{order:3;width:100%;justify-content:center;gap:32px;height:42px}.mode{min-height:42px}.header-right{gap:2px}#space{top:100px}.inspecting #space{right:0;bottom:calc(42px + 44dvh)}.details{top:auto;left:0;right:0;bottom:42px;width:100%;height:44dvh;padding:20px;border:0;border-top:1px solid #29313a}.name{font-size:24px}.details-top{margin-bottom:14px}.metric:nth-child(even){border-left:0;padding-left:0}.metrics{display:block}.metric dd{margin-top:0;text-align:right}.catalog{top:110px;left:16px;max-width:calc(100vw - 32px)}.telemetry{padding:0 16px}.telemetry .label{display:none}.scene-hint{left:16px;font-size:8px}.inspecting .scene-hint{display:none}.events-panel{top:120px}}
+    .sky-open #space,.sky-open .scene-hint,.sky-open .telemetry{visibility:hidden}.sky-open .scene-label{display:none!important}
+    .events-panel{top:78px;bottom:42px;left:0;right:0;width:auto;transform:none;border:0;border-radius:0;overflow:auto;background:radial-gradient(ellipse at 76% 40%,#1c1918 0,transparent 50%),#090d11;padding:32px max(24px,calc((100vw - 1120px)/2));scrollbar-color:#35424a #090d11}
+    .sky-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.sky-heading h2{margin:8px 0 0;font-size:28px;letter-spacing:-.04em}.events-panel .sky-kicker{font:9px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#d8ae7f;margin:0}.events-panel .sky-intro{margin:10px 0 24px;font-size:12px;color:#8f9ba6;max-width:650px}.sky-location{display:flex;align-items:end;gap:18px;padding-bottom:24px;border-bottom:1px solid #273039;flex-wrap:wrap}.sky-location label{display:grid;gap:8px;font:9px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#98a6b2}.sky-location select{min-height:44px;min-width:175px;padding:9px 30px 9px 12px;background:#10171e;color:#e0e8ee;border:1px solid #303a43;border-radius:4px;font:12px Inter,sans-serif;color-scheme:dark}.events-panel .sky-location p{font:10px 'JetBrains Mono',monospace;margin:0 0 8px;color:#80939e;line-height:1.8}
+    .sky-status{padding:40px 0;min-height:130px}.sky-status p{margin:0}.text-action{background:transparent;border:0;border-bottom:1px solid #788d9a;color:#c7e5ed;font:12px Inter,sans-serif;min-height:44px;cursor:pointer;padding:0 2px}.sky-result{display:grid;grid-template-columns:1.1fr 1fr;gap:44px;padding-top:28px}.sky-type{color:#e6b780;font:10px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em}.events-panel .sky-date{font-size:34px;font-weight:400;letter-spacing:-.05em;margin:10px 0 6px;color:#f4f5f6}.events-panel .sky-local{font:11px 'JetBrains Mono',monospace;color:#92a7b7;margin:0 0 25px}.sky-metrics{display:flex;gap:30px;padding:20px 0;border-block:1px solid #263039;margin:0}.sky-metrics dt{font-size:10px;color:#889ba9}.sky-metrics dd{font:25px 'JetBrains Mono',monospace;margin:8px 0 0;color:#e8c49a}.sky-times{margin:20px 0}.sky-time{display:grid;grid-template-columns:1fr auto;gap:4px;padding:12px 0;border-bottom:1px solid #202a31}.sky-time dt{font-size:12px;color:#a3b2be}.sky-time dd{margin:0;font:12px 'JetBrains Mono',monospace;color:#e2e9ed;text-align:right}.sky-time small{display:block;color:#7f909d;font:9px Inter,sans-serif;margin-top:5px;line-height:1.5}.sky-footnote{font-size:11px!important;line-height:1.7!important;color:#8ea2b0!important}.sky-actions{display:flex;gap:20px;flex-wrap:wrap}.sky-visual{align-self:start;text-align:center;border:1px solid #263039;border-radius:8px;background:#0a0e13;padding:20px}.sky-visual svg{display:block;width:100%;height:230px;overflow:hidden}.sky-visual label{display:block;font:9px 'JetBrains Mono',monospace;color:#a4b1bb;letter-spacing:.09em;text-transform:uppercase}.sky-visual input{width:100%;accent-color:#ddb589;min-height:44px;cursor:ew-resize}.events-panel .sky-preview-time{font:12px 'JetBrains Mono',monospace;color:#eee1d0;margin:12px 0}.events-panel .sky-preview-status{font-size:11px;color:#94a5b1;min-height:30px}.events-panel .sky-safety{border-left:2px solid #b99268;padding:10px 14px;font-size:11px;line-height:1.7;color:#baa992;margin-top:22px}.sky-source{border-top:1px solid #263039;margin-top:28px;padding-top:16px;font-size:10px!important;line-height:1.8!important}.sky-source a{color:#94b8c7}.events-panel button:focus-visible,.events-panel select:focus-visible,.events-panel input:focus-visible{outline:2px solid #b4deed;outline-offset:3px}
+    @media(max-width:800px){.events-panel{padding:24px}.sky-result{gap:24px}.sky-metrics{gap:20px}.events-panel .sky-date{font-size:28px}}
+    @media(max-width:650px){.events-panel{top:100px;padding:20px 18px}.sky-heading h2{font-size:25px}.sky-location{gap:12px}.sky-location label{flex:1;min-width:0}.sky-location select{min-width:0;width:100%}.sky-location p{width:100%}.sky-result{grid-template-columns:1fr;gap:24px}.sky-visual{grid-row:2}.sky-visual svg{height:190px}.sky-source{padding-bottom:12px}}
   </style>
 </head>
 <body>
-  <!-- 3D Environment -->
   <div id="space" aria-hidden="true"></div>
-  
-  <!-- Aerospace Grid Overlay -->
-  <div class="grid-overlay"></div>
-  <!-- Danger Scanlines -->
-  <div class="scanlines"></div>
-  
-  <!-- Interface overlay -->
-  <main class="hud">
-    
-    <!-- Top Navigation -->
+  <main class="app" aria-label="Illustrative solar system and near-Earth object atlas">
     <header class="topbar">
-      <div style="display: flex; align-items: center;">
-        <button id="sidebar-toggle" class="icon-btn" aria-label="Toggle Sidebar" title="Toggle Intelligence Feed">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-        </button>
-        <div class="brand">
-          <div class="brand-mark" aria-hidden="true"></div>
-          <h1>NEO THREAT INDEX</h1>
-          <span>Automated NEO Intelligence</span>
-        </div>
-      </div>
-      <nav class="nav-links">
-        <a href="#" class="active" data-target="sec-hero">OVERVIEW</a>
-        <a href="#" data-target="sec-approaches">DATABASE</a>
-        <a href="#" data-target="sec-status">SYSTEM</a>
-        <a href="#architecture" id="architecture-toggle">ARCHITECTURE</a>
+      <div><p class="label">Near-Earth object observatory</p><p class="brand">NEO THREAT INDEX</p></div>
+      <nav class="mode-switch" aria-label="Explore">
+        <button id="neoMode" class="mode" type="button" aria-pressed="true">Earth</button>
+        <button id="solarMode" class="mode" type="button" aria-pressed="false">Solar System</button>
+        <button id="eventsMode" class="mode" type="button" aria-pressed="false">Sky Events</button>
       </nav>
-      <div class="system-status" aria-label="Data-feed status and UTC clock">
-        <span class="system-feed"><span id="top-status-dot" class="dot live"></span><span id="top-status-text">SYNCING</span></span>
-        <span class="system-divider" aria-hidden="true"></span>
-        <span id="global-clock">00:00:00 UTC</span>
+      <div class="header-right"><span id="feedStatus" class="status" role="status">Loading feed</span>
+        <button id="searchButton" class="quiet-button" type="button" aria-label="Search objects" aria-expanded="false" aria-controls="searchPanel" title="Search objects (/)"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 6 6"/></svg></button>
+        <button id="overviewButton" class="quiet-button" type="button" aria-label="Reset view" title="Reset view"><svg viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button id="refreshButton" class="quiet-button" type="button" aria-label="Refresh NASA feed" title="Refresh NASA feed"><svg viewBox="0 0 24 24"><path d="M20 10a8 8 0 1 0-2 8M20 3v7h-7"/></svg></button>
       </div>
     </header>
-
-    <!-- Transparent Window for mobile 3D Interaction -->
-    <div class="mobile-canvas-window"></div>
-
-    <!-- Left Intelligence Feed -->
-    <aside class="panel-left">
-      
-      <div class="section hero" id="sec-hero">
-        <div class="hero-kicker"><span class="dot live"></span>EARTH ORBIT / NEO OPERATIONS</div>
-        <h2>Orbital<br><span>Intelligence</span></h2>
-        <p>Live NASA Near-Earth Object telemetry—validated, normalized and classified by an n8n-orchestrated prototype risk model.</p>
-        <div class="hero-readout">
-          <span>ORCHESTRATION PATH</span>
-          <strong>NASA NEOws → n8n → MISSION DISPLAY</strong>
-        </div>
-      </div>
-      
-      <div class="section" id="sec-overview">
-        <h3 class="section-header">Threat Overview</h3>
-        <div class="overview-grid">
-          <div class="ov-card">
-            <span class="ov-label">Tracked Objects</span>
-            <span class="ov-val" id="ov-tracked">--</span>
-          </div>
-          <div class="ov-card">
-            <span class="ov-label">Close Approaches</span>
-            <span class="ov-val" id="ov-approaches">--</span>
-          </div>
-          <div class="ov-card">
-            <span class="ov-label">Elevated Risk</span>
-            <span class="ov-val accent" id="ov-risk">--</span>
-          </div>
-          <div class="ov-card">
-            <span class="ov-label">Next Approach</span>
-            <span class="ov-val" id="ov-next">--</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="section" id="sec-distribution">
-        <h3 class="section-header">Threat Distribution</h3>
-        <div id="dist-container">
-          <!-- Filled by JS -->
-        </div>
-      </div>
-      
-      <div class="section" id="sec-approaches">
-        <h3 class="section-header">Today's Three Closest NASA Approaches</h3>
-        <div id="approach-list" class="approach-list" aria-label="Closest Near-Earth Object approaches">
-          <!-- Filled by JS -->
-        </div>
-      </div>
-      
-      <div class="section" id="sec-status">
-        <h3 class="section-header">System & Data Status</h3>
-        <ul class="diag-list">
-          <li>
-            <span class="diag-lbl"><span id="sys-feed-dot" class="dot live"></span> Data Feed</span>
-            <span class="diag-val" id="sys-feed-txt">ONLINE</span>
-          </li>
-          <li>
-            <span class="diag-lbl"><span class="dot live"></span> Source</span>
-            <span class="diag-val" id="sys-source">NASA NeoWs → n8n</span>
-          </li>
-          <li>
-            <span class="diag-lbl"><span class="dot live"></span> Last Sync</span>
-            <span class="diag-val" id="sys-sync">--</span>
-          </li>
-          <li>
-            <span class="diag-lbl"><span class="dot live"></span> Data Age</span>
-            <span class="diag-val" id="sys-age">--</span>
-          </li>
-          <li>
-            <span class="diag-lbl"><span class="dot live"></span> Automation</span>
-            <span class="diag-val" id="sys-automation">n8n / 12h</span>
-          </li>
-          <li>
-            <span class="diag-lbl"><span class="dot live"></span> Render Engine</span>
-            <span class="diag-val" id="sys-fps">60 FPS</span>
-          </li>
-        </ul>
-      </div>
-      
-      <div class="footer-bar">
-        <span>V3.1.0 PROTOTYPE HEURISTIC</span>
-        <span>NO EXPOSED SECRETS</span>
-      </div>
-      
-    </aside>
-
-    <section class="stage-readout" id="stage-readout" aria-live="polite" aria-label="Selected close-approach summary">
-      <div class="stage-eyebrow">LIVE CLOSE-APPROACH CORRIDOR</div>
-      <strong class="stage-name" id="stage-name">AWAITING TELEMETRY</strong>
-      <div class="stage-metric"><span>MISS DISTANCE</span><strong id="stage-distance">--</strong></div>
-    </section>
-
-    <!-- Right Panel: Telemetry & Threat Score -->
-    <aside class="panel-right">
-      
-      <!-- Split into two modules for independent mobile sorting -->
-      <div class="threat-module" id="sec-threat-score">
-        <div class="tm-header" style="margin: 0;">
-          <h3 class="tm-title">Threat Index</h3>
-          <div class="tm-score-container">
-            <div class="tm-score" id="ts-score">--</div>
-            <div class="tm-class" id="ts-class" style="color: var(--muted);">ANALYZING</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="threat-module" id="sec-telemetry">
-        <div class="tel-selector">
-          <select id="tel-select" aria-label="Select Tracked Object">
-            <option value="-1">-- SELECT OBJECT --</option>
-          </select>
-          <div class="tel-selector-arrow">▼</div>
-        </div>
-        
-        <div class="tel-grid">
-          <div class="tel-cell">
-            <div class="tel-lbl">Est. Diameter</div>
-            <div class="tel-val" id="tel-dia">--</div>
-          </div>
-          <div class="tel-cell">
-            <div class="tel-lbl">Velocity</div>
-            <div class="tel-val" id="tel-vel">--</div>
-          </div>
-          <div class="tel-cell">
-            <div class="tel-lbl">Miss Distance</div>
-            <div class="tel-val" id="tel-dist">--</div>
-          </div>
-          <div class="tel-cell">
-            <div class="tel-lbl">Approach Time</div>
-            <div class="tel-val" id="tel-time">--</div>
-          </div>
-        </div>
-        
-        <div style="margin-top: 24px;">
-          <h3 class="tel-lbl" style="margin-bottom: 8px;">Automated Threat Assessment</h3>
-          <p id="tel-assess" style="font-size: 12px; color: var(--muted); line-height: 1.6; margin: 0;">Awaiting selection...</p>
-        </div>
-        <div style="margin-top: 20px; border-top: 1px solid var(--line); padding-top: 16px;">
-          <h3 class="tel-lbl" style="margin-bottom: 8px;">Threat Index Factors</h3>
-          <p id="tel-factors" style="font-family: var(--mono); font-size: 10px; color: var(--muted); line-height: 1.8; margin: 0;">Select an object to inspect the deterministic factors.</p>
-          <p id="tel-provenance" style="font-size: 10px; color: var(--dim); line-height: 1.6; margin: 12px 0 0;"></p>
-        </div>
-      </div>
-      
-    </aside>
-
-    <!-- Bottom Legend -->
-    <div class="panel-bottom">
-      <div class="legend">
-        <div class="leg-item"><div class="leg-dot" style="background: #ffffff;"></div> Earth</div>
-        <div class="leg-item"><div class="leg-dot" style="background: var(--muted);"></div> Tracked NEO</div>
-        <div class="leg-item"><div class="leg-dot" style="background: var(--accent); box-shadow: 0 0 8px var(--accent);"></div> Selected</div>
-        <div class="leg-item"><div class="leg-line" style="border-top: 1px dashed var(--muted);"></div> Orbit Path</div>
-      </div>
+    <div class="layout">
+      <h1 class="sr-only">NEO Threat Index</h1>
+      <aside id="detailsPanel" class="details" aria-labelledby="entityName" hidden>
+        <div class="details-top"><span id="entityKind" class="chip">Selected object</span><button id="closeDetails" class="icon-button" aria-label="Deselect object" title="Close (Esc)">✕</button></div>
+        <h2 id="entityName" class="name">Earth</h2>
+        <p id="entitySubname" class="subname">Planet · Solar system reference</p>
+        <p id="entityDescription" class="description">A monochrome point-field reference object. Spatial placement and apparent body size are intentionally compressed for legibility.</p>
+        <dl class="metrics">
+          <div class="metric"><dt>Reference distance</dt><dd id="metricDistance">1.00 AU</dd></div>
+          <div class="metric"><dt>Orbital period</dt><dd id="metricPeriod">365.25 d</dd></div>
+          <div class="metric"><dt>Diameter</dt><dd id="metricDiameter">12,742 km</dd></div>
+          <div class="metric"><dt>System context</dt><dd id="metricContext">Inner planet</dd></div>
+        </dl>
+        <p id="entityNote" class="context"><strong>Display note:</strong> reference values are approximate; the point field is illustrative and not to scale.</p>
+      </aside>
+      <section id="searchPanel" class="catalog" aria-labelledby="catalogTitle" hidden>
+        <div class="catalog-head"><p id="catalogTitle" class="label">Find an object</p><button id="closeSearch" class="icon-button" aria-label="Close search">✕</button></div>
+        <label for="objectSearch" class="sr-only">Search object name</label><input id="objectSearch" class="search-input" type="search" placeholder="Find a planet or asteroid…" autocomplete="off"><p id="catalogCount" class="catalog-count" role="status"></p>
+        <div id="catalogList" class="catalog-list" aria-label="Available solar system objects"></div>
+      </section>
     </div>
-    
-  </main>
-
-  <div id="simulation-banner" role="status" aria-live="polite" style="display:none; position:fixed; top:72px; left:50%; transform:translateX(-50%); z-index:100; padding:10px 16px; background:rgba(255,51,102,.92); color:#fff; font:600 11px var(--mono); letter-spacing:.1em;">SIMULATION ACTIVE — NOT REAL NASA TELEMETRY <button id="simulation-exit" class="icon-btn" style="display:inline-flex; margin:0 0 0 8px; padding:2px; color:#fff;" aria-label="Exit simulation">×</button></div>
-  <div id="architecture-modal" role="dialog" aria-modal="true" aria-labelledby="architecture-title" hidden style="position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,.78); align-items:center; justify-content:center; padding:24px;">
-    <section style="max-width:620px; width:100%; border:1px solid var(--accent); background:var(--surface-solid); padding:32px; box-shadow:0 0 40px rgba(0,255,255,.1);">
-      <button id="architecture-close" class="icon-btn" style="float:right; margin:0;" aria-label="Close architecture panel">×</button>
-      <h2 id="architecture-title" style="font:500 22px var(--sans); color:var(--white); margin:0 0 12px;">System Architecture</h2>
-      <p style="font-size:13px; color:var(--muted); line-height:1.6;">n8n is the orchestration core—not a decorative integration.</p>
-      <pre style="white-space:pre-wrap; margin:24px 0; padding:16px; border:1px solid var(--line); color:var(--accent); font:11px/1.8 var(--mono);">NASA NeoWs → Validate → Normalize → Threat Index
-                ↓                 ↓
-          n8n Scheduler → Risk Router → Normal / Alert
-                ↓
-      GitHub JSON → Dashboard</pre>
-      <p style="font-size:11px; color:var(--dim); line-height:1.6; margin:0;">The 3D flybys are interpretive visualizations of relative telemetry, not orbital propagation. The threat score is a prototype heuristic, not an official NASA risk score.</p>
-      <button id="simulation-start" style="margin-top:20px; background:transparent; color:var(--error); border:1px solid var(--error); padding:10px 12px; font:600 10px var(--mono); letter-spacing:.08em; cursor:pointer;">SIMULATE THREAT EVENT</button>
+    <section id="eventsPanel" class="events-panel" aria-labelledby="eventsTitle" hidden>
+      <div class="sky-heading"><div><p class="sky-kicker">Sky events / 01 · Solar eclipses</p><h2 id="eventsTitle">The next eclipse, from your city.</h2></div><button id="closeEvents" class="icon-button" aria-label="Close sky events">✕</button></div>
+      <p class="sky-intro">20 major cities. Local circumstances, local time. Find the next solar eclipse with a phase above your city’s horizon.</p>
+      <div class="sky-location"><label for="skyCountry">COUNTRY<select id="skyCountry"></select></label><label for="skyCity">CITY<select id="skyCity"></select></label><p id="skyCoordinates"></p></div>
+      <div id="skyStatus" class="sky-status" role="status" aria-live="polite"><p id="skyStatusText">Choose a city to calculate its next eclipse.</p><button id="skyRetry" class="text-action" hidden>Try calculation again</button></div>
+      <div id="skyResult" class="sky-result" hidden>
+        <div><span id="skyType" class="sky-type"></span><h3 id="skyDate" class="sky-date"></h3><p id="skyLocal" class="sky-local"></p>
+          <dl class="sky-metrics"><div><dt id="skyCoverageLabel">Peak coverage</dt><dd id="skyCoverage"></dd></div><div><dt>Sun altitude at peak</dt><dd id="skyAltitude"></dd></div></dl>
+          <dl id="skyTimes" class="sky-times"></dl><p id="skyVisibility" class="sky-footnote"></p>
+          <div class="sky-actions"><button id="skyCalendar" class="text-action">Add to calendar ↗</button><button id="skyRecalculate" class="text-action">Recalculate</button></div>
+        </div>
+        <div class="sky-visual"><svg viewBox="0 0 360 240" role="img" aria-label="Calculated Sun and Moon overlap preview"><defs><radialGradient id="solarDisc"><stop offset="0" stop-color="#fff3c8"/><stop offset=".75" stop-color="#f2bd6a"/><stop offset="1" stop-color="#c6833b"/></radialGradient><clipPath id="solarClip"><circle cx="180" cy="120" r="78"/></clipPath></defs><circle cx="180" cy="120" r="90" fill="none" stroke="#d6a76b" stroke-opacity=".08"/><circle cx="180" cy="120" r="78" fill="url(#solarDisc)"/><g clip-path="url(#solarClip)"><circle id="skyMoon" cx="180" cy="120" r="78" fill="#080c11"/></g></svg>
+          <label for="skySlider">Explore the eclipse · local time</label><input id="skySlider" type="range" min="0" max="80" value="40" step="1"><p id="skyPreviewTime" class="sky-preview-time"></p><p id="skyPreviewStatus" class="sky-preview-status"></p><p class="sky-footnote">Computed disc overlap. Orientation is illustrative; this is not a camera view.</p>
+        </div>
+      </div>
+      <p class="sky-safety">Protect your eyes: use proper solar viewers for partial and annular phases. Ordinary sunglasses are not sufficient. <a href="https://science.nasa.gov/eclipses/safety/" target="_blank" rel="noopener noreferrer">NASA viewing guidance ↗</a></p>
+      <p class="sky-source"><a href="https://github.com/cosinekitty/astronomy" target="_blank" rel="noopener noreferrer">Astronomy Engine 2.1.19</a> · Calculated predictions, not a live NASA feed. Approximate city-centre coordinates at sea level; an unobstructed horizon is assumed. Clouds, terrain and buildings are not modelled. <span id="skyComputed"></span></p>
     </section>
-  </div>
-
-  <!-- Sync overlay -->
-  <div id="boot" class="boot-overlay">
-    <div class="term-line">NEO_THREAT_INDEX v3.1.0</div>
-    <div class="term-line">ESTABLISHING UPLINK... OK</div>
-    <div class="term-line">INITIALIZING WEBGL ORBIT ENGINE... OK</div>
-    <div class="term-line active" id="boot-status">SYNCING ORBITAL DATA <span class="blink">_</span></div>
-  </div>
-
-  <!-- Dynamic Markers -->
-  <div id="earthLabel" class="marker">
-    <div class="marker-title">Earth</div>
-    <div class="marker-sub">0.00 LD</div>
-  </div>
-  <div id="astLabel" class="marker" style="display:none;">
-    <div class="marker-title" id="astLabelName">OBJ</div>
-    <div class="marker-sub" id="astLabelSub">T-MINUS</div>
-  </div>
+    <p class="scene-hint">Drag to explore · scroll to zoom · select an object · / to search</p>
+    <footer class="telemetry" aria-label="Atlas status">
+      <div><p class="label">Display mode</p><strong id="modeValue">Solar system</strong></div>
+      <div><p class="label">Selected object</p><strong id="selectedValue">Earth</strong></div>
+      <div><p class="label">Data status</p><strong id="dataValue">Solar-system reference</strong></div>
+      <div><p class="label">View type</p><strong>Illustrative / not to scale</strong></div>
+    </footer>
+  </main>
+  <div id="sceneLabel" class="scene-label" aria-hidden="true"><span id="sceneLabelName"></span><small id="sceneLabelMeta"></small></div>
+  <p id="announcement" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+  <div id="loader" class="loader"><div><p>Constructing point atlas</p><i></i></div></div>
 
   <script type="module">
     import * as THREE from "three";
     import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-    /* ==========================================================================
-       CONFIGURATION & CONSTANTS
-       ========================================================================== */
-    // n8n commits the artifact to GitHub and Vercel rebuilds from that commit. Reading the deployed
-    // artifact avoids a second, independently cached GitHub Raw request in every browser session.
-    const FEED_URL = "./daily-asteroids.json";
-    const REFRESH_INTERVAL_MS = 5 * 60 * 1000; 
-    const STALE_THRESHOLD_MS = 26 * 60 * 60 * 1000;
-    
-    const COLORS = {
-      low: 0x00ff88,
-      moderate: 0xffd700,
-      watch: 0xffd700,
-      elevated: 0xff8800,
-      high: 0xff3366,
-      critical: 0xff3366,
-      accent: 0x00ffff,
-      muted: 0x555555
-    };
+    // DATA
+    const NEO_FEED="https://raw.githubusercontent.com/Umxr357/space_dashboard/main/daily-asteroids.json";
+    const AU_KM=149597870.7;
+    const SOLAR_BODIES=[
+      {id:"sun",name:"Sun",kind:"Star",distance:"0 AU",period:"—",diameter:"1,392,700 km",context:"Central star",description:"The atlas anchor. The displayed size is intentionally reduced relative to the surrounding reference paths.",radius:1.1,orbit:0,points:1750},
+      {id:"mercury",name:"Mercury",kind:"Planet",distance:"0.39 AU",period:"88 d",diameter:"4,879 km",context:"Inner planet",description:"A terrestrial planet represented at a readable size, not its physical size relative to the Sun.",radius:.19,orbit:2.5,points:210},
+      {id:"venus",name:"Venus",kind:"Planet",distance:"0.72 AU",period:"224.7 d",diameter:"12,104 km",context:"Inner planet",description:"Reference position in a compressed solar-system field.",radius:.31,orbit:3.6,points:280},
+      {id:"earth",name:"Earth",kind:"Planet",distance:"1.00 AU",period:"365.25 d",diameter:"12,742 km",context:"Inner planet",description:"Earth is shown with a separate Moon marker. Their displayed separation is enlarged for legibility.",radius:.34,orbit:4.8,points:320},
+      {id:"moon",name:"Moon",kind:"Natural satellite",distance:"0.00257 AU from Earth",period:"27.3 d",diameter:"3,475 km",context:"Earth system",description:"A schematic Earth satellite marker; its field placement is not a literal lunar orbit.",radius:.12,orbit:null,points:120,parent:"earth"},
+      {id:"mars",name:"Mars",kind:"Planet",distance:"1.52 AU",period:"687 d",diameter:"6,779 km",context:"Inner planet",description:"Reference position in the inner solar system.",radius:.25,orbit:6.2,points:240},
+      {id:"ceres",name:"Ceres",kind:"Dwarf planet",distance:"2.77 AU",period:"4.6 y",diameter:"940 km",context:"Asteroid belt",description:"A reference dwarf planet placed within the schematic asteroid-belt region.",radius:.14,orbit:7.8,points:135},
+      {id:"jupiter",name:"Jupiter",kind:"Planet",distance:"5.20 AU",period:"11.9 y",diameter:"139,820 km",context:"Outer planet",description:"A gas giant with point density increased for visual prominence; physical body scale remains compressed.",radius:.82,orbit:10.1,points:900},
+      {id:"saturn",name:"Saturn",kind:"Planet",distance:"9.58 AU",period:"29.5 y",diameter:"116,460 km",context:"Outer planet",description:"A gas giant represented with a schematic point-ring system.",radius:.7,orbit:12.8,points:760,ring:true},
+      {id:"uranus",name:"Uranus",kind:"Planet",distance:"19.2 AU",period:"84 y",diameter:"50,724 km",context:"Outer planet",description:"An ice giant in the compressed outer-system context.",radius:.49,orbit:15.1,points:520},
+      {id:"neptune",name:"Neptune",kind:"Planet",distance:"30.1 AU",period:"164.8 y",diameter:"49,244 km",context:"Outer planet",description:"The outermost major planet in this atlas.",radius:.48,orbit:17.3,points:500},
+      {id:"pluto",name:"Pluto",kind:"Dwarf planet",distance:"39.5 AU",period:"248 y",diameter:"2,377 km",context:"Kuiper belt",description:"A dwarf-planet reference beyond Neptune. The atlas does not model its actual orbital inclination or eccentricity.",radius:.16,orbit:19.4,points:145}
+    ];
 
-    /* ==========================================================================
-       APPLICATION STATE
-       ========================================================================== */
-    const state = {
-      asteroids: [],
-      selectedIndex: -1,
-      hoveredIndex: -1,
-      feedStatus: "loading",
-      lastFetchedAt: null,
-      lastDataHash: null,
-      feedGeneratedAt: null,
-      metadata: {},
-      liveAsteroids: [],
-      simulationActive: false
-    };
+    // STATE
+    const state={mode:"solar",selected:{type:"body",id:"earth"},neos:[],dataSource:"loading",lastRefresh:null,reducedMotion:matchMedia("(prefers-reduced-motion: reduce)").matches,pageVisible:!document.hidden,animationFrame:0,camera:{position:new THREE.Vector3(0,10,26),target:new THREE.Vector3()},label:{left:null,top:null,visible:false}};
+    const sceneState={scene:null,camera:null,renderer:null,controls:null,raycaster:null,pointer:null,solarGroup:null,neoGroup:null,stars:null,bodyObjects:new Map(),neoObjects:[],interactive:[],lastFrame:0};
+    const $=id=>document.getElementById(id);
+    const dom={space:$("space"),solarMode:$("solarMode"),neoMode:$("neoMode"),overview:$("overviewButton"),refresh:$("refreshButton"),status:$("feedStatus"),catalogTitle:$("catalogTitle"),catalogCount:$("catalogCount"),catalog:$("catalogList"),kind:$("entityKind"),name:$("entityName"),subname:$("entitySubname"),description:$("entityDescription"),distance:$("metricDistance"),period:$("metricPeriod"),diameter:$("metricDiameter"),context:$("metricContext"),note:$("entityNote"),modeValue:$("modeValue"),selectedValue:$("selectedValue"),dataValue:$("dataValue"),label:$("sceneLabel"),labelName:$("sceneLabelName"),labelMeta:$("sceneLabelMeta"),announcement:$("announcement"),loader:$("loader")};
+    const numberOrNull=value=>value!==null&&value!==undefined&&value!==""&&Number.isFinite(Number(value))?Number(value):null;
+    state.inspecting=false;
+    state.cameraMoving=false;
+    let pointerStart=null;
+    function setInspector(open){
+      state.inspecting=open;
+      $("detailsPanel").hidden=!open;
+      document.body.classList.toggle("inspecting",open);
+      state.label.visible=false;
+      if(!open){dom.label.style.display="none";dom.selectedValue.textContent="None";}
+      resize();
+    }
+    function closeSelection(){
+      const returnFocus=$("detailsPanel").contains(document.activeElement);
+      setInspector(false);
+      sceneState.neoObjects.forEach(({neo,material,trail})=>{material.size=.11;material.color.setHex(neo.hazardous===true?0xe63946:0x4cc9f0);if(trail)trail.material.opacity=.055;});
+      renderOnce();
+      if(returnFocus)$("searchButton").focus();
+    }
+    function toggleSearch(open){
+      $("searchPanel").hidden=!open;
+      $("searchButton").setAttribute("aria-expanded",String(open));
+      if(open){closeEvents();renderCatalog();$("objectSearch").focus();}
+      else if($("searchPanel").contains(document.activeElement))$("searchButton").focus();
+    }
+    function closeEvents(){
+      $("eventsPanel").hidden=true;
+      document.body.classList.remove("sky-open");
+      cancelSkyCalculation();
+      $("eventsMode").setAttribute("aria-pressed","false");
+      dom.solarMode.setAttribute("aria-pressed",String(state.mode==="solar"));
+      dom.neoMode.setAttribute("aria-pressed",String(state.mode==="neo"));
+    }
+    const cleanText=(value,fallback)=>typeof value==="string"&&value.trim()?value.trim().slice(0,180):fallback;
+    const formatDistance=value=>value===null?"Unavailable":value>=1e6?(value/1e6).toFixed(2).replace(/\.00$/,"")+"M km":Math.round(value).toLocaleString()+" km";
 
-    const sceneState = {
-      scene: null, camera: null, renderer: null, controls: null,
-      raycaster: null, pointer: null, pointerDown: null, pointerDirty: false,
-      earth: null, earthCore: null, earthWire: null, atmosphere: null, stars: null, foregroundStars: null, radarRing: null,
-      asteroidMeshes: [],
-      paused: false,
-      initialized: false
-    };
-
-    /* ==========================================================================
-       UTILITIES
-       ========================================================================== */
-    const $ = id => document.getElementById(id);
-
-    function simpleHash(str) {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+    // ECLIPSE_CORE_START — pure calculation functions also exercised by the tests.
+    const SKY_CITIES=[
+      {id:"delhi",name:"New Delhi",country:"India",lat:28.6139,lon:77.209,tz:"Asia/Kolkata"},
+      {id:"mumbai",name:"Mumbai",country:"India",lat:19.076,lon:72.8777,tz:"Asia/Kolkata"},
+      {id:"bengaluru",name:"Bengaluru",country:"India",lat:12.9716,lon:77.5946,tz:"Asia/Kolkata"},
+      {id:"kolkata",name:"Kolkata",country:"India",lat:22.5726,lon:88.3639,tz:"Asia/Kolkata"},
+      {id:"dubai",name:"Dubai",country:"United Arab Emirates",lat:25.2048,lon:55.2708,tz:"Asia/Dubai"},
+      {id:"singapore",name:"Singapore",country:"Singapore",lat:1.3521,lon:103.8198,tz:"Asia/Singapore"},
+      {id:"tokyo",name:"Tokyo",country:"Japan",lat:35.6762,lon:139.6503,tz:"Asia/Tokyo"},
+      {id:"beijing",name:"Beijing",country:"China",lat:39.9042,lon:116.4074,tz:"Asia/Shanghai"},
+      {id:"london",name:"London",country:"United Kingdom",lat:51.5074,lon:-.1278,tz:"Europe/London"},
+      {id:"paris",name:"Paris",country:"France",lat:48.8566,lon:2.3522,tz:"Europe/Paris"},
+      {id:"madrid",name:"Madrid",country:"Spain",lat:40.4168,lon:-3.7038,tz:"Europe/Madrid"},
+      {id:"berlin",name:"Berlin",country:"Germany",lat:52.52,lon:13.405,tz:"Europe/Berlin"},
+      {id:"cairo",name:"Cairo",country:"Egypt",lat:30.0444,lon:31.2357,tz:"Africa/Cairo"},
+      {id:"cape-town",name:"Cape Town",country:"South Africa",lat:-33.9249,lon:18.4241,tz:"Africa/Johannesburg"},
+      {id:"new-york",name:"New York",country:"United States",lat:40.7128,lon:-74.006,tz:"America/New_York"},
+      {id:"los-angeles",name:"Los Angeles",country:"United States",lat:34.0522,lon:-118.2437,tz:"America/Los_Angeles"},
+      {id:"toronto",name:"Toronto",country:"Canada",lat:43.6532,lon:-79.3832,tz:"America/Toronto"},
+      {id:"sao-paulo",name:"São Paulo",country:"Brazil",lat:-23.5505,lon:-46.6333,tz:"America/Sao_Paulo"},
+      {id:"sydney",name:"Sydney",country:"Australia",lat:-33.8688,lon:151.2093,tz:"Australia/Sydney"},
+      {id:"auckland",name:"Auckland",country:"New Zealand",lat:-36.8485,lon:174.7633,tz:"Pacific/Auckland"}
+    ];
+    function eclipseSnapshot(A,observer,ms){
+      const time=new Date(ms),sun=A.Equator("Sun",time,observer,true,true),moon=A.Equator("Moon",time,observer,true,true);
+      const rad=Math.PI/180,ds=sun.dec*rad,dm=moon.dec*rad;
+      const dra=((moon.ra-sun.ra+36)%24-12)*15*rad;
+      const separation=Math.acos(Math.max(-1,Math.min(1,Math.sin(ds)*Math.sin(dm)+Math.cos(ds)*Math.cos(dm)*Math.cos(dra))));
+      const rs=Math.asin(695700/(sun.dist*149597870.7)),rm=Math.asin(1737.4/(moon.dist*149597870.7));
+      const d=separation/rs,r=rm/rs;
+      let coverage=0;
+      if(d<=Math.abs(1-r))coverage=Math.min(1,r*r);
+      else if(d<1+r){
+        const clamp=v=>Math.max(-1,Math.min(1,v));
+        const area=Math.acos(clamp((d*d+1-r*r)/(2*d)))+r*r*Math.acos(clamp((d*d+r*r-1)/(2*d*r)))-.5*Math.sqrt(Math.max(0,(-d+1+r)*(d+1-r)*(d-1+r)*(d+1+r)));
+        coverage=Math.max(0,Math.min(1,area/Math.PI));
       }
-      return hash;
+      const dx=dra*Math.cos((ds+dm)/2),dy=dm-ds,length=Math.hypot(dx,dy)||1;
+      return {ms,coverage,x:dx/length*d,y:-dy/length*d,r,altitude:A.Horizon(time,observer,sun.ra,sun.dec,"normal").altitude};
     }
-    const seededUnit = (seed, salt = "") => (Math.abs(simpleHash(`${seed}:${salt}`)) % 10000) / 10000;
-
-    const formatDist = val => val >= 1e6 
-      ? `<span class="val">${(val/1e6).toFixed(2)}</span><span class="unit">M km</span>`
-      : `<span class="val">${Math.round(val).toLocaleString()}</span><span class="unit">km</span>`;
-
-    const formatVel = val => `<span class="val">${Math.round(val).toLocaleString()}</span><span class="unit">km/h</span>`;
-    const formatDia = val => `<span class="val">${Math.round(val)}</span><span class="unit">m</span>`;
-
-    /* ==========================================================================
-       DATA PROCESSING
-       ========================================================================== */
-    // Prototype heuristic: a transparent prioritisation aid, never an official NASA risk model.
-    function calculateThreatIndex({ hazardous, diameter, velocity, distance }) {
-      const lunarDistances = distance / 384400;
-      const hazardousPoints = hazardous ? 25 : 0;
-      const proximityPoints = lunarDistances <= 1 ? 35 : lunarDistances <= 5 ? 28 : lunarDistances <= 20 ? 18 : lunarDistances <= 100 ? 8 : 2;
-      const diameterPoints = diameter >= 1000 ? 25 : diameter >= 300 ? 18 : diameter >= 100 ? 10 : 4;
-      const velocityPoints = velocity >= 100000 ? 15 : velocity >= 60000 ? 10 : velocity >= 30000 ? 6 : 2;
-      const score = Math.min(100, hazardousPoints + proximityPoints + diameterPoints + velocityPoints);
-      const riskLevel = score >= 75 ? "HIGH" : score >= 50 ? "ELEVATED" : score >= 25 ? "MODERATE" : "LOW";
-      return { score, riskLevel, lunarDistances, factors: { hazardous: hazardousPoints, proximity: proximityPoints, diameter: diameterPoints, velocity: velocityPoints } };
+    function eclipseVisibleWindows(begin,end,altitudeAt){
+      // Refine every sampled horizon crossing to <1 second. Sun-centre altitude is used.
+      const windows=[];let left=begin,alt=altitudeAt(left),start=alt>0?left:null;
+      while(left<end){
+        const right=Math.min(end,left+60000),next=altitudeAt(right);
+        if((alt>0)!==(next>0)){
+          let lo=left,hi=right;
+          while(hi-lo>500){const mid=(lo+hi)/2;if((altitudeAt(mid)>0)===(alt>0))lo=mid;else hi=mid;}
+          const crossing=(lo+hi)/2;
+          if(next>0)start=crossing;else if(start!==null){windows.push([start,crossing]);start=null;}
+        }
+        left=right;alt=next;
+      }
+      if(start!==null)windows.push([start,end]);
+      return windows;
+    }
+    function calculateNextEclipse(A,city,nowMs,years=10){
+      if(!Number.isFinite(nowMs)||!Number.isFinite(city.lat)||!Number.isFinite(city.lon)||Math.abs(city.lat)>90||Math.abs(city.lon)>180)throw new Error("Invalid location or date");
+      const observer=new A.Observer(city.lat,city.lon,0),limit=new Date(nowMs);limit.setUTCFullYear(limit.getUTCFullYear()+years);
+      let eclipse=A.SearchLocalSolarEclipse(new Date(nowMs-86400000),observer);
+      for(let attempt=0;attempt<40;attempt++){
+        const begin=eclipse.partial_begin.time.date.getTime(),end=eclipse.partial_end.time.date.getTime(),peak=eclipse.peak.time.date.getTime();
+        if(begin>limit.getTime())return null;
+        if(end>nowMs){
+          const windows=eclipseVisibleWindows(begin,end,ms=>eclipseSnapshot(A,observer,ms).altitude);
+          if(windows.some(window=>window[1]>nowMs)){
+            const phases=[["First contact",eclipse.partial_begin],["Maximum eclipse",eclipse.peak],["Last contact",eclipse.partial_end]];
+            if(eclipse.total_begin)phases.splice(1,0,[eclipse.kind==="total"?"Totality begins":"Annularity begins",eclipse.total_begin]);
+            if(eclipse.total_end)phases.splice(phases.length-1,0,[eclipse.kind==="total"?"Totality ends":"Annularity ends",eclipse.total_end]);
+            const centralVisible=eclipse.total_begin&&windows.some(([a,b])=>a<eclipse.total_end.time.date.getTime()&&b>eclipse.total_begin.time.date.getTime());
+            const frames=Array.from({length:81},(_,i)=>eclipseSnapshot(A,observer,begin+(end-begin)*i/80));
+            frames.push(eclipseSnapshot(A,observer,peak));frames.sort((a,b)=>a.ms-b.ms);
+            const peakAltitude=eclipse.peak.altitude;
+            return {cityId:city.id,computedAt:nowMs,begin,end,peak,kind:centralVisible?eclipse.kind:"partial",geometricKind:eclipse.kind,coverage:eclipse.obscuration,peakAltitude,windows,frames,phases:phases.map(([name,event])=>({name,ms:event.time.date.getTime(),altitude:event.altitude}))};
+          }
+        }
+        eclipse=A.NextLocalSolarEclipse(eclipse.peak.time,observer);
+      }
+      return null;
+    }
+    function skyLocalTime(ms,city,withZone=false){return new Intl.DateTimeFormat("en-GB",{timeZone:city.tz,day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23",...(withZone?{timeZoneName:"short"}:{})}).format(new Date(ms));}
+    function eclipseCalendar(result,city){
+      const stamp=ms=>new Date(ms).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}Z$/,"Z");
+      const escape=value=>String(value).replace(/\\/g,"\\\\").replace(/\r?\n/g,"\\n").replace(/,/g,"\\,").replace(/;/g,"\\;");
+      const lines=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//NEO Threat Index//Solar Eclipse Explorer//EN","CALSCALE:GREGORIAN","BEGIN:VEVENT",`UID:${city.id}-${Math.round(result.peak)}@neo-threat-index.local`,`DTSTAMP:${stamp(Date.now())}`,`DTSTART:${stamp(result.windows[0][0])}`,`DTEND:${stamp(result.windows[result.windows.length-1][1])}`,`SUMMARY:${escape(result.kind+" solar eclipse — "+city.name)}`,`LOCATION:${escape(city.name+", "+city.country)}`,`DESCRIPTION:${escape("Calculated with Astronomy Engine 2.1.19 for the city centre. Visible horizon window; weather and terrain are not modelled. Use proper solar eye protection. Local maximum: "+skyLocalTime(result.peak,city,true)+". Check current predictions before observing.")}`,"END:VEVENT","END:VCALENDAR"];
+      const encoder=new TextEncoder();
+      return lines.map(line=>{let out="",part="",bytes=0;for(const char of line){const size=encoder.encode(char).length;if(bytes+size>74){out+=part+"\r\n";part=" ";bytes=1;}part+=char;bytes+=size;}return out+part;}).join("\r\n")+"\r\n";
+    }
+    // ECLIPSE_CORE_END
+    const skyState={city:SKY_CITIES[0],result:null,worker:null,timeout:0,request:0,cache:new Map()};
+    function cancelSkyCalculation(){skyState.request++;skyState.worker?.terminate();skyState.worker=null;clearTimeout(skyState.timeout);}
+    function populateSkyCities(country,cityId){
+      $("skyCity").replaceChildren();
+      SKY_CITIES.filter(city=>city.country===country).forEach(city=>$("skyCity").add(new Option(city.name,city.id)));
+      if(SKY_CITIES.some(city=>city.country===country&&city.id===cityId))$("skyCity").value=cityId;
+    }
+    function initSkyEvents(){
+      [...new Set(SKY_CITIES.map(city=>city.country))].sort().forEach(country=>$("skyCountry").add(new Option(country,country)));
+      let saved;try{saved=localStorage.getItem("neo-sky-city");}catch{}
+      skyState.city=SKY_CITIES.find(city=>city.id===saved)||SKY_CITIES[0];
+      $("skyCountry").value=skyState.city.country;populateSkyCities(skyState.city.country,skyState.city.id);
+      $("skyCountry").addEventListener("change",()=>{populateSkyCities($("skyCountry").value);requestSkyEclipse();});
+      $("skyCity").addEventListener("change",()=>requestSkyEclipse());
+      $("skyRetry").addEventListener("click",()=>requestSkyEclipse(true));
+      $("skyRecalculate").addEventListener("click",()=>requestSkyEclipse(true));
+      $("skySlider").addEventListener("input",renderSkyPreview);
+      $("skyCalendar").addEventListener("click",()=>{
+        if(!skyState.result)return;
+        const url=URL.createObjectURL(new Blob([eclipseCalendar(skyState.result,skyState.city)],{type:"text/calendar;charset=utf-8"}));
+        const link=document.createElement("a");link.href=url;link.download=`solar-eclipse-${skyState.city.id}.ics`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      });
+      setInterval(()=>{if(!$("eventsPanel").hidden&&skyState.result&&skyState.result.windows.at(-1)[1]<=Date.now())requestSkyEclipse(true);},60000);
+    }
+    function requestSkyEclipse(force=false){
+      cancelSkyCalculation();
+      const request=skyState.request;
+      const city=SKY_CITIES.find(item=>item.id===$("skyCity").value);
+      if(!city){showSkyError("Choose one of the supported cities.");return;}
+      skyState.city=city;skyState.result=null;
+      try{localStorage.setItem("neo-sky-city",city.id);}catch{}
+      $("skyCoordinates").textContent=`${Math.abs(city.lat).toFixed(2)}° ${city.lat<0?"S":"N"} · ${Math.abs(city.lon).toFixed(2)}° ${city.lon<0?"W":"E"} · ${city.tz}`;
+      $("skyResult").hidden=true;$("skyRetry").hidden=true;$("skyStatus").hidden=false;$("skyStatusText").textContent="Calculating the next visible solar eclipse for "+city.name+"…";$("skyComputed").textContent="";$("skyResult").setAttribute("aria-busy","true");
+      const cached=skyState.cache.get(city.id);
+      if(!force&&cached&&cached.windows.at(-1)[1]>Date.now()){renderSkyResult(cached);return;}
+      try{
+        const source=`importScripts('https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js');\n${eclipseSnapshot.toString()}\n${eclipseVisibleWindows.toString()}\n${calculateNextEclipse.toString()}\nonmessage=function(event){try{postMessage({result:calculateNextEclipse(Astronomy,event.data.city,event.data.now)});}catch(error){postMessage({error:String(error.message||error)});}};`;
+        const url=URL.createObjectURL(new Blob([source],{type:"text/javascript"}));
+        try{skyState.worker=new Worker(url);}finally{URL.revokeObjectURL(url);}
+        const worker=skyState.worker;
+        const finish=()=>{worker.terminate();if(skyState.worker===worker)skyState.worker=null;clearTimeout(skyState.timeout);};
+        worker.onmessage=event=>{if(request!==skyState.request)return;finish();if(event.data.error){showSkyError("Eclipse calculation failed. Please retry.");return;}if(event.data.result)skyState.cache.set(city.id,event.data.result);renderSkyResult(event.data.result);};
+        worker.onerror=event=>{if(request!==skyState.request)return;event.preventDefault();finish();showSkyError("The calculation library could not load. Check your internet connection and retry.");};
+        skyState.timeout=setTimeout(()=>{if(request!==skyState.request)return;finish();showSkyError("Calculation took too long. Please retry.");},20000);
+        worker.postMessage({city,now:Date.now()});
+      }catch{showSkyError("This browser could not start the eclipse calculation. Try an up-to-date browser with internet access.");}
+    }
+    function showSkyError(message){$("skyStatus").hidden=false;$("skyStatusText").textContent=message;$("skyRetry").hidden=false;$("skyResult").hidden=true;$("skyResult").setAttribute("aria-busy","false");}
+    function renderSkyResult(result){
+      skyState.result=result;$("skyResult").setAttribute("aria-busy","false");
+      if(!result){$("skyStatus").hidden=false;$("skyStatusText").textContent="No locally visible solar eclipse found in the next 10 years for this city. Try another supported city.";$("skyResult").hidden=true;return;}
+      const city=skyState.city,peakVisible=result.peakAltitude>0;
+      $("skyStatus").hidden=true;$("skyResult").hidden=false;
+      $("skyType").textContent=`${result.kind} solar eclipse · ${result.begin<=Date.now()?"in progress":"upcoming"}`;
+      $("skyDate").textContent=new Intl.DateTimeFormat("en-GB",{timeZone:city.tz,day:"numeric",month:"long",year:"numeric"}).format(new Date(result.peak));
+      $("skyLocal").textContent=city.name+", "+city.country+" · "+city.tz;
+      $("skyCoverageLabel").textContent=peakVisible?"Sun covered at peak":"Peak below horizon";
+      $("skyCoverage").textContent=peakVisible?(result.coverage*100).toFixed(1)+"%":"—";
+      $("skyAltitude").textContent=result.peakAltitude.toFixed(1)+"°";
+      $("skyTimes").replaceChildren();
+      for(const phase of result.phases){const row=document.createElement("div");row.className="sky-time";const title=document.createElement("dt"),value=document.createElement("dd"),note=document.createElement("small");title.textContent=phase.name;value.textContent=skyLocalTime(phase.ms,city,true);note.textContent=phase.altitude>0?"Sun "+phase.altitude.toFixed(1)+"° above horizon":"Below horizon · not visible";value.append(note);row.append(title,value);$("skyTimes").append(row);}
+      const windows=result.windows.map(([a,b])=>skyLocalTime(a,city)+" – "+skyLocalTime(b,city)).join("; ");
+      $("skyVisibility").textContent="Above-horizon viewing window: "+windows+" (local time). "+(peakVisible?result.peakAltitude<5?"The peak is low on the horizon; visibility may be difficult. ":"":"The geometric maximum is below the horizon; only part of this event can be seen. ")+"Visibility is astronomical, not a weather forecast.";
+      $("skyComputed").textContent="Calculated "+new Date(result.computedAt).toISOString().slice(0,16).replace("T"," ")+" UTC. Times are approximate; future timezone rules may change.";
+      $("skySlider").max=String(result.frames.length-1);$("skySlider").value=String(result.frames.reduce((best,frame,index)=>Math.abs(frame.ms-result.peak)<Math.abs(result.frames[best].ms-result.peak)?index:best,0));renderSkyPreview();
+      dom.announcement.textContent=result.kind+" solar eclipse for "+city.name+", "+$("skyDate").textContent;
+    }
+    function renderSkyPreview(){
+      const result=skyState.result;if(!result)return;
+      const frame=result.frames[Number($("skySlider").value)];if(!frame)return;
+      $("skyMoon").setAttribute("cx",String(180+frame.x*78));$("skyMoon").setAttribute("cy",String(120+frame.y*78));$("skyMoon").setAttribute("r",String(frame.r*78));
+      $("skyPreviewTime").textContent=skyLocalTime(frame.ms,skyState.city,true);
+      $("skyPreviewStatus").textContent=frame.altitude>0?`Approx. ${(frame.coverage*100).toFixed(1)}% covered · Sun ${frame.altitude.toFixed(1)}° above horizon`:"Below the horizon · overlap not visible from this city";
+      $("skySlider").setAttribute("aria-valuetext",$("skyPreviewTime").textContent+". "+$("skyPreviewStatus").textContent);
+    }
+    function openSkyEvents(){
+      toggleSearch(false);closeSelection();$("eventsPanel").hidden=false;document.body.classList.add("sky-open");
+      dom.solarMode.setAttribute("aria-pressed","false");dom.neoMode.setAttribute("aria-pressed","false");$("eventsMode").setAttribute("aria-pressed","true");
+      $("skyCountry").focus();requestSkyEclipse();
     }
 
-    function deterministicAssessment(ast) {
-      return `${ast.name} is classified ${ast.threatCategory} by the prototype heuristic: ${ast.distance.toLocaleString()} km miss distance, ${Math.round(ast.velocity).toLocaleString()} km/h relative velocity and an estimated ${Math.round(ast.diameter)} m diameter. This is automated telemetry interpretation, not an official NASA prediction.`;
+    function normalizeNeo(raw,index){
+      raw=raw?.json??raw??{};
+      const diameter=raw.diameter_meters??raw.diameter_m??raw.diameter??raw.estimated_diameter?.meters?.estimated_diameter_max??raw.estimated_diameter;
+      const velocity=raw.velocity_kmh??raw.velocity_km_h??raw.velocity??raw.relative_velocity?.kilometers_per_hour??raw.close_approach_data?.[0]?.relative_velocity?.kilometers_per_hour;
+      const distance=raw.miss_distance_km??raw.miss_distance??raw.close_approach_data?.[0]?.miss_distance?.kilometers;
+      return {id:String(raw.id||raw.name||index),name:cleanText(raw.name||raw.designation,"Unidentified input"),diameter:numberOrNull(diameter),velocity:numberOrNull(velocity),distance:numberOrNull(distance),hazardous:typeof raw.hazardous==="boolean"?raw.hazardous:typeof raw.is_potentially_hazardous_asteroid==="boolean"?raw.is_potentially_hazardous_asteroid:null,assessment:cleanText(raw.assessment??raw.ai_assessment??raw.summary,"No assessment supplied by the workflow."),approach:cleanText(raw.close_approach_date??raw.close_approach_data?.[0]?.close_approach_date_full??raw.close_approach_data?.[0]?.close_approach_date,"Not supplied")};
     }
 
-    function processAsteroid(raw, index) {
-      try {
-        const dia = raw.diameter_meters ?? raw.diameter_m ?? raw.diameter ?? 50;
-        const vel = raw.velocity_kmh ?? raw.velocity_km_h ?? raw.velocity ?? 30000;
-        const dist = raw.miss_distance_km ?? raw.miss_distance ?? 5000000;
-        
-        // Comprehensive check for hazardous flags
-        const haz = raw.hazardous === true || 
-                    String(raw.hazardous).toLowerCase() === "true" || 
-                    raw.is_potentially_hazardous_asteroid === true || 
-                    String(raw.is_potentially_hazardous_asteroid).toLowerCase() === "true";
-        
-        // NASA reports the actual close-approach timestamp. Do not infer it from miss distance/velocity.
-        const approachStr = raw.approach_date || raw.approach_date_full || "Scheduled approach";
-
-        if (!raw.name && !raw.id && !raw.neo_reference_id) return null;
-        if (!Number.isFinite(Number(dia)) || !Number.isFinite(Number(vel)) || !Number.isFinite(Number(dist)) || Number(dist) <= 0) return null;
-        const threat = calculateThreatIndex({ hazardous: haz, diameter: Number(dia), velocity: Number(vel), distance: Number(dist) });
-
-        return {
-          id: index,
-          name: (raw.name || raw.designation || `NEO-${String(index+1).padStart(3,"0")}`).substring(0, 20),
-          diameter: dia,
-          velocity: vel,
-          distance: dist,
-          hazardous: haz,
-          assessment: raw.assessment || raw.automated_assessment || raw.summary || "",
-          approachStr: approachStr,
-          threatScore: threat.score,
-          threatCategory: raw.risk_level || threat.riskLevel,
-          factors: raw.risk_factors || threat.factors,
-          source: raw.source || "NASA NeoWs",
-          processedBy: raw.processed_by || "n8n",
-          nasaUrl: raw.nasa_jpl_url || raw.nasa_jpl_reference,
-          generatedAt: raw.generated_at || null,
-          isSimulation: raw.source === "SIMULATION"
-        };
-      } catch (e) { return null; }
-    }
-
-    /* ==========================================================================
-       DATA FETCHING
-       ========================================================================== */
-    async function fetchFeed() {
-      try {
-        const url = `${FEED_URL}?t=${Date.now()}`;
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 12000);
-        
-        const res = await fetch(url, { signal: controller.signal, cache: "no-store" });
+    async function fetchNeoFeed(){
+      state.dataSource="loading";
+      updateHeader();
+      const controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),9000);
+      try{
+        const response=await fetch(NEO_FEED,{signal:controller.signal,cache:"no-store"});
+        if(!response.ok)throw new Error("HTTP "+response.status);
+        const payload=await response.json();
+        state.sourceUpdated=Number.isFinite(Date.parse(payload?.fetched_at))?new Date(payload.fetched_at):null;
+        const input=payload?.asteroids??payload?.near_earth_objects??payload?.data??payload;
+        const rows=Array.isArray(input)?input:input&&typeof input==="object"?Object.values(input).filter(Array.isArray).flat():[];
+        const records=rows.map(normalizeNeo).filter(record=>record.name!=="Unidentified input");
+        if(!records.length)throw new Error("Input feed empty");
+        state.neos=records;
+        state.dataSource="Workflow feed loaded";
+      }catch(error){
+        state.dataSource=(state.neos.length?"Cached records · refresh failed":"Workflow feed unavailable")+(error.message.startsWith("HTTP ")?" · "+error.message:"");
+      }finally{
         clearTimeout(timeout);
-        
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const rawText = await res.text();
-        
-        const hash = simpleHash(rawText);
-        if (hash === state.lastDataHash) {
-          state.lastFetchedAt = new Date();
-          updateSystemStatus(state.metadata.pipeline_status || "OPERATIONAL");
-          return false;
-        }
-
-        let data = JSON.parse(rawText);
-        state.metadata = Array.isArray(data) ? {} : (data.metadata || {});
-        // Prefer pipeline provenance; HTTP Last-Modified keeps legacy array feeds from appearing fresh merely because they were fetched now.
-        state.feedGeneratedAt = state.metadata.generated_at || data.generated_at || res.headers.get("last-modified") || null;
-        let arr = Array.isArray(data) ? data : (data.asteroids || data.near_earth_objects || Object.values(data).find(Array.isArray) || []);
-        
-        const processed = arr.map((a, i) => processAsteroid(a, i)).filter(a => a !== null);
-        if (processed.length === 0) throw new Error("Empty Feed");
-
-        state.asteroids = processed;
-        state.lastDataHash = hash;
-        state.lastFetchedAt = new Date();
-        state.feedStatus = "live";
-        
-        state.liveAsteroids = processed;
-        updateSystemStatus(state.metadata.pipeline_status || "OPERATIONAL");
-        return true;
-      } catch (err) {
-        state.feedStatus = err.name === "AbortError" ? "timeout" : "error";
-        updateSystemStatus("ERROR");
-        return false;
+        state.lastRefresh=new Date();
+        updateHeader();
       }
     }
 
-    /* ==========================================================================
-       DOM UPDATES & NAVIGATION
-       ========================================================================== */
-    // Sidebar Toggle
-    $("sidebar-toggle").addEventListener("click", () => {
-      document.querySelector(".hud").classList.toggle("sidebar-closed");
-    });
-
-    function toggleArchitecture(open) {
-      const modal = $("architecture-modal");
-      modal.hidden = !open;
-      modal.style.display = open ? "flex" : "none";
-      if (open) $("architecture-close").focus();
+    // UI
+    function updateHeader(){
+      dom.status.textContent=state.dataSource==="loading"?"Refreshing…":state.dataSource==="Workflow feed loaded"?"NASA · "+(state.sourceUpdated?"updated "+state.sourceUpdated.toISOString().slice(11,16)+" UTC":"feed loaded"):state.dataSource;
+      dom.status.title=state.sourceUpdated?"Feed updated: "+state.sourceUpdated.toISOString():state.dataSource;
+      dom.refresh.disabled=state.dataSource==="loading";
+      dom.dataValue.textContent=state.mode==="solar"?"Solar-system reference":state.dataSource;
     }
 
-    function toggleSimulation(enable) {
-      state.simulationActive = enable;
-      $("simulation-banner").style.display = enable ? "block" : "none";
-      if (enable) {
-        const simulated = processAsteroid({ id: "SIM-2026-NTI", name: "SIM-2026 NTI", diameter_meters: 720, velocity_kmh: 112000, miss_distance_km: 520000, hazardous: true, source: "SIMULATION", processed_by: "n8n simulation branch", approach_date: "DEMO EVENT" }, 0);
-        simulated.assessment = "SIMULATED EVENT — NOT REAL NASA TELEMETRY. The elevated parameters exercise the same validation, normalization, deterministic scoring and alert-routing design used by the workflow.";
-        state.asteroids = [simulated];
-        state.selectedIndex = 0;
-      } else {
-        state.asteroids = state.liveAsteroids;
-        state.selectedIndex = state.asteroids.length ? 0 : -1;
-      }
-      buildUI();
-      buildThreeJSAsteroids();
-      selectAsteroid(state.selectedIndex);
+    function currentEntity(){
+      if(state.selected.type==="body")return SOLAR_BODIES.find(body=>body.id===state.selected.id)||null;
+      return state.neos[state.selected.index]||null;
     }
 
-    $("architecture-toggle").addEventListener("click", (event) => { event.preventDefault(); toggleArchitecture(true); });
-    $("architecture-close").addEventListener("click", () => toggleArchitecture(false));
-    $("architecture-modal").addEventListener("click", (event) => { if (event.target === $("architecture-modal")) toggleArchitecture(false); });
-    $("simulation-start").addEventListener("click", () => { toggleArchitecture(false); toggleSimulation(true); });
-    $("simulation-exit").addEventListener("click", () => toggleSimulation(false));
-
-    // Setup Navigation Links for smooth scrolling and visual feedback
-    document.querySelectorAll('.nav-links a').forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const targetId = link.getAttribute('data-target');
-        const targetEl = $(targetId);
-        
-        if (targetEl) {
-          // If sidebar is closed, open it when a navigation link is clicked
-          document.querySelector(".hud").classList.remove("sidebar-closed");
-          
-          // Robust scrolling targeting the correct scroll container
-          const isMobile = window.innerWidth <= 900;
-          const scrollContainer = isMobile ? document.querySelector('.hud') : document.querySelector('.panel-left');
-          
-          if (scrollContainer && !isMobile) {
-            scrollContainer.scrollTo({
-              top: targetEl.offsetTop,
-              behavior: 'smooth'
-            });
-          } else {
-            targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-
-          // Visual Feedback Pulse
-          targetEl.classList.remove('pulse-target');
-          void targetEl.offsetWidth; // trigger reflow to restart animation
-          targetEl.classList.add('pulse-target');
-          
-          document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-          link.classList.add('active');
-        }
-      });
-    });
-
-    function updateSystemStatus(statusStr) {
-      const generated = state.feedGeneratedAt ? new Date(state.feedGeneratedAt) : null;
-      const ageMs = generated && !Number.isNaN(generated.valueOf()) ? Date.now() - generated.valueOf() : null;
-      const stale = ageMs !== null && ageMs > STALE_THRESHOLD_MS;
-      const isOk = /ONLINE|OPERATIONAL|SUCCESS/i.test(statusStr) && !stale;
-      $("sys-feed-txt").innerText = stale ? "STALE DATA" : (isOk ? "OPERATIONAL" : statusStr);
-      $("sys-feed-dot").className = `dot ${stale ? 'stale' : isOk ? 'live' : 'error'}`;
-      if ($("top-status-text")) $("top-status-text").innerText = stale ? "STALE" : (isOk ? "LIVE FEED" : "CHECK FEED");
-      if ($("top-status-dot")) $("top-status-dot").className = `dot ${stale ? 'stale' : isOk ? 'live' : 'error'}`;
-      const d = generated || state.lastFetchedAt;
-      if (d) $("sys-sync").innerText = `${d.toISOString().replace("T", " ").slice(0, 16)} UTC`;
-      if ($("sys-age")) $("sys-age").innerText = ageMs === null ? "UNKNOWN" : ageMs < 3600000 ? `${Math.max(0, Math.floor(ageMs / 60000))}m` : `${Math.floor(ageMs / 3600000)}h`;
-      if ($("sys-automation")) $("sys-automation").innerText = state.metadata.schedule || "n8n / 12h";
-    }
-
-    function buildUI() {
-      if (state.asteroids.length === 0) return;
-      
-      // 1. Overview Grid
-      $("ov-tracked").innerText = state.asteroids.length;
-      
-      const upcoming = state.asteroids.filter(a => a.approachStr !== "Transiting");
-      $("ov-approaches").innerText = upcoming.length;
-      
-      const elevated = state.asteroids.filter(a => a.threatCategory === "ELEVATED" || a.threatCategory === "HIGH");
-      $("ov-risk").innerText = elevated.length;
-      $("ov-risk").className = `ov-val ${elevated.length > 0 ? 'accent' : ''}`;
-      
-      const closest = state.asteroids.reduce((p, c) => c.distance < p.distance ? c : p);
-      $("ov-next").innerText = closest.approachStr;
-
-      // 2. Threat Distribution
-      const dist = { LOW: 0, MODERATE: 0, ELEVATED: 0, HIGH: 0 };
-      state.asteroids.forEach(a => dist[a.threatCategory]++);
-      const total = state.asteroids.length;
-      
-      let distHTML = '';
-      ['HIGH', 'ELEVATED', 'MODERATE', 'LOW'].forEach(cat => {
-        if (dist[cat] > 0 || cat === 'HIGH' || cat === 'ELEVATED') {
-          const pct = Math.round((dist[cat] / total) * 100);
-          const colorVar = `var(--${cat.toLowerCase()})`;
-          distHTML += `
-            <div class="dist-row">
-              <span class="dist-lbl">${cat}</span>
-              <div class="dist-bar-bg"><div class="dist-bar-fill" style="width: ${pct}%; background: ${colorVar}"></div></div>
-              <span class="dist-pct">${pct}%</span>
-            </div>`;
-        }
-      });
-      $("dist-container").innerHTML = distHTML;
-
-      // 3. Populate Telemetry Dropdown
-      let optionsHTML = '<option value="-1">-- SELECT OBJECT --</option>';
-      state.asteroids.forEach(ast => {
-        const dangerPrefix = ast.hazardous ? "⚠️ " : "";
-        optionsHTML += `<option value="${ast.id}">${dangerPrefix}[${ast.threatCategory}] ${ast.name}</option>`;
-      });
-      $("tel-select").innerHTML = optionsHTML;
-      $("tel-select").value = state.selectedIndex;
-
-      // Bind Dropdown Listener (only once)
-      if (!$("tel-select").dataset.bound) {
-        $("tel-select").addEventListener("change", (e) => {
-          selectAsteroid(parseInt(e.target.value));
-        });
-        $("tel-select").dataset.bound = "true";
-      }
-
-      // 4. Closest approach mission cards
-      const sorted = [...state.asteroids].sort((a,b) => a.distance - b.distance);
-      let rowsHTML = '';
-      sorted.forEach((ast, position) => {
-        const cardColor = ast.threatCategory === "HIGH" ? "var(--critical)" : `var(--${ast.threatCategory.toLowerCase()})`;
-        const distanceLabel = ast.distance >= 1e6 ? `${(ast.distance / 1e6).toFixed(2)} M km` : `${Math.round(ast.distance).toLocaleString()} km`;
-        const approachLabel = String(ast.approachStr).replace(" ", " · ");
-        rowsHTML += `
-          <button type="button" data-id="${ast.id}" class="approach-card ${ast.id === state.selectedIndex ? 'active' : ''}" style="--card-accent:${cardColor}" aria-pressed="${ast.id === state.selectedIndex ? 'true' : 'false'}" aria-label="Select ${ast.name}">
-            <span class="approach-card-top">
-              <span class="approach-rank">${String(position + 1).padStart(2, "0")} / ${String(sorted.length).padStart(2, "0")}</span>
-              <span class="approach-name">${ast.hazardous ? '⚠ ' : ''}${ast.name}</span>
-              <span class="approach-chip">${ast.threatCategory}</span>
-            </span>
-            <span class="approach-card-bottom">
-              <span class="approach-metric"><span>Miss distance</span><strong>${distanceLabel}</strong></span>
-              <span class="approach-metric"><span>Approach</span><strong>${approachLabel}</strong></span>
-            </span>
-          </button>`;
-      });
-      $("approach-list").innerHTML = rowsHTML;
-      
-      // Bind clicks
-      document.querySelectorAll('#approach-list [data-id]').forEach(card => {
-        card.addEventListener('click', () => {
-          selectAsteroid(parseInt(card.getAttribute('data-id')));
-          // On mobile, scroll down to the telemetry panel smoothly
-          if (window.innerWidth <= 900) {
-            $("sec-telemetry").scrollIntoView({ behavior: "smooth", block: "nearest" });
-          }
-        });
-      });
-    }
-
-    function selectAsteroid(index) {
-      if (index < 0 || index >= state.asteroids.length) {
-        state.selectedIndex = -1;
-        document.body.classList.remove('danger-mode');
-        if ($("tel-select")) $("tel-select").value = "-1";
-        $("ts-score").innerText = "--";
-        $("ts-class").innerText = "AWAITING";
-        $("ts-class").style.color = "var(--muted)";
-        $("tel-dia").innerHTML = "--";
-        $("tel-vel").innerHTML = "--";
-        $("tel-dist").innerHTML = "--";
-        $("tel-time").innerHTML = "--";
-        $("tel-assess").innerText = "Select an object from the feed or orbital map to view detailed telemetry.";
-        if ($("stage-name")) $("stage-name").innerText = "AWAITING TELEMETRY";
-        if ($("stage-distance")) $("stage-distance").innerText = "--";
-        if ($("stage-readout")) {
-          $("stage-readout").style.removeProperty("--stage-accent");
-          $("stage-readout").classList.remove("selected");
-        }
-        document.documentElement.style.setProperty("--score-angle", "0deg");
-        $("astLabel").style.display = "none";
-        updateThreeJSSelection();
+    function renderCatalog(){
+      const solar=state.mode==="solar";
+      const entities=solar?SOLAR_BODIES:state.neos;
+      dom.catalogTitle.textContent=solar?"Solar system · click Earth for NEOs":"Near-Earth objects · workflow feed";
+      dom.catalogCount.textContent=String(entities.length).padStart(2,"0")+" objects";
+      dom.catalog.replaceChildren();
+      if(!entities.length){
+        const message=document.createElement("p");
+        message.className="empty";
+        message.textContent="No NEO records available. Check the workflow feed, then use Reload feed.";
+        dom.catalog.append(message);
         return;
       }
-
-      state.selectedIndex = index;
-      const ast = state.asteroids[index];
-      
-      // Threat UI Override for Hazardous objects
-      document.body.classList.toggle('danger-mode', ast.threatCategory === "HIGH");
-      
-      // Update Table Highlight
-      document.querySelectorAll('#approach-list [data-id]').forEach(card => {
-        const active = parseInt(card.getAttribute('data-id')) === index;
-        card.classList.toggle('active', active);
-        card.setAttribute('aria-pressed', String(active));
+      entities.forEach((entity,index)=>{
+        if(!entity.name.toLowerCase().includes($("objectSearch").value.trim().toLowerCase()))return;
+        const button=document.createElement("button");
+        const selected=state.inspecting&&(solar?state.selected.type==="body"&&state.selected.id===entity.id:state.selected.type==="neo"&&state.selected.index===index);
+        button.type="button";
+        button.className="entity";
+        button.setAttribute("aria-pressed",String(selected));
+        button.setAttribute("aria-label","Select "+entity.name);
+        button.dataset.type=solar?"body":"neo";
+        button.dataset.index=String(index);
+        const dot=document.createElement("i");
+        const text=document.createElement("span");
+        text.textContent=entity.name;
+        button.append(dot,text);
+        const meta=document.createElement("small");meta.textContent=solar?entity.kind:formatDistance(entity.distance);button.append(meta);
+        button.addEventListener("click",()=>selectEntity(solar?{type:"body",id:entity.id}:{type:"neo",index},true));
+        dom.catalog.append(button);
       });
-
-      // Update Telemetry
-      if ($("tel-select")) $("tel-select").value = index;
-      $("tel-dia").innerHTML = formatDia(ast.diameter);
-      $("tel-vel").innerHTML = formatVel(ast.velocity);
-      $("tel-dist").innerHTML = formatDist(ast.distance);
-      $("tel-time").innerHTML = `<span class="val">${ast.approachStr}</span>`;
-      $("tel-assess").innerText = ast.assessment || deterministicAssessment(ast);
-      $("tel-factors").innerText = `Potentially hazardous: +${ast.factors.hazardous}\nProximity: +${ast.factors.proximity}\nDiameter: +${ast.factors.diameter}\nVelocity: +${ast.factors.velocity}\nFinal classification: ${ast.threatCategory}`;
-      $("tel-provenance").innerHTML = `SOURCE: ${ast.source} · PROCESSED BY: ${ast.processedBy} · RISK MODEL: Prototype NEO Threat Index${ast.nasaUrl ? ` · <a href="${ast.nasaUrl}" target="_blank" rel="noopener" style="color:var(--accent)">NASA/JPL reference</a>` : ''}`;
-      if ($("stage-name")) $("stage-name").innerText = ast.name;
-      if ($("stage-distance")) $("stage-distance").innerText = ast.distance >= 1e6 ? `${(ast.distance / 1e6).toFixed(2)} M KM` : `${Math.round(ast.distance).toLocaleString()} KM`;
-      if ($("stage-readout")) {
-        const stageColor = ast.hazardous ? "var(--critical)" : `var(--${ast.threatCategory.toLowerCase()})`;
-        $("stage-readout").style.setProperty("--stage-accent", stageColor);
-        $("stage-readout").classList.remove("selected");
-        void $("stage-readout").offsetWidth;
-        $("stage-readout").classList.add("selected");
-      }
-
-      // Update Threat Score
-      $("ts-score").innerText = `${Math.round(ast.threatScore)}/100`;
-      $("ts-class").innerText = ast.threatCategory;
-      $("ts-class").style.color = ast.threatCategory === "HIGH" ? "var(--critical)" : `var(--${ast.threatCategory.toLowerCase()})`;
-      document.documentElement.style.setProperty("--score-angle", `${Math.round(ast.threatScore * 3.6)}deg`);
-
-      // Update 3D Selection
-      updateThreeJSSelection();
+      dom.catalogCount.textContent=dom.catalog.children.length+" / "+entities.length+" objects";
+      if(!dom.catalog.children.length){const empty=document.createElement("p");empty.className="empty";empty.textContent="No matching objects.";dom.catalog.append(empty);}
     }
 
-    /* ==========================================================================
-       THREE.JS ENGINE
-       ========================================================================== */
-    function initThreeJS() {
-      sceneState.scene = new THREE.Scene();
-      
-      sceneState.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-      sceneState.camera.position.set(20, 15, 30);
-      
-      sceneState.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      sceneState.renderer.setSize(window.innerWidth, window.innerHeight);
-      sceneState.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      $("space").appendChild(sceneState.renderer.domElement);
-      
-      sceneState.controls = new OrbitControls(sceneState.camera, sceneState.renderer.domElement);
-      sceneState.controls.enableDamping = true;
-      sceneState.controls.dampingFactor = 0.05;
-      sceneState.controls.minDistance = 8;
-      sceneState.controls.maxDistance = 150;
-      sceneState.controls.maxPolarAngle = Math.PI - 0.1; 
-      
-      // Earth: a layered, texture-free focal object that remains legible behind the HUD.
-      sceneState.scene.add(new THREE.AmbientLight(0x102d50, 1.15));
-      const keyLight = new THREE.DirectionalLight(0x9bdfff, 2.4);
-      keyLight.position.set(14, 10, 18);
-      sceneState.scene.add(keyLight);
-      const rimLight = new THREE.PointLight(0x006dff, 1.8, 55);
-      rimLight.position.set(-14, 6, -10);
-      sceneState.scene.add(rimLight);
-
-      const earthCoreGeo = new THREE.SphereGeometry(3.94, 64, 64);
-      const earthCoreMat = new THREE.MeshPhongMaterial({ color: 0x06244d, emissive: 0x001225, emissiveIntensity: 0.75, shininess: 54, transparent: true, opacity: 0.96 });
-      sceneState.earthCore = new THREE.Mesh(earthCoreGeo, earthCoreMat);
-      sceneState.scene.add(sceneState.earthCore);
-
-      const earthGeo = new THREE.SphereGeometry(4, 64, 64);
-      const earthMat = new THREE.PointsMaterial({ color: 0xa5efff, size: 0.026, transparent: true, opacity: 0.5, depthWrite: false });
-      sceneState.earth = new THREE.Points(earthGeo, earthMat);
-      sceneState.scene.add(sceneState.earth);
-
-      const earthWireGeo = new THREE.SphereGeometry(4.08, 24, 16);
-      const earthWireMat = new THREE.MeshBasicMaterial({ color: 0x1d9eff, wireframe: true, transparent: true, opacity: 0.11, blending: THREE.AdditiveBlending, depthWrite: false });
-      sceneState.earthWire = new THREE.Mesh(earthWireGeo, earthWireMat);
-      sceneState.scene.add(sceneState.earthWire);
-      
-      // Atmosphere glow + operational radar arc
-      const atmoGeo = new THREE.SphereGeometry(4.33, 32, 32);
-      const atmoMat = new THREE.MeshBasicMaterial({ color: 0x00b7ff, transparent: true, opacity: 0.11, blending: THREE.AdditiveBlending, side: THREE.BackSide, depthWrite: false });
-      sceneState.atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
-      sceneState.scene.add(sceneState.atmosphere);
-      const radarGeo = new THREE.RingGeometry(6.6, 6.64, 96, 1, 0, Math.PI * 1.58);
-      const radarMat = new THREE.MeshBasicMaterial({ color: 0x00d9ff, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
-      sceneState.radarRing = new THREE.Mesh(radarGeo, radarMat);
-      sceneState.radarRing.rotation.x = Math.PI / 2;
-      sceneState.radarRing.rotation.z = -0.55;
-      sceneState.scene.add(sceneState.radarRing);
-
-      // Starfield
-      const starGeo = new THREE.BufferGeometry();
-      const starPos = [];
-      for (let i = 0; i < 2000; i++) {
-        starPos.push((Math.random() - 0.5) * 300, (Math.random() - 0.5) * 300, (Math.random() - 0.5) * 300);
+    function updateDetails(){
+      const entity=currentEntity();
+      if(!entity){
+        dom.kind.textContent="Earth monitor";
+        dom.name.textContent="Near-Earth objects";
+        dom.subname.textContent=state.dataSource;
+        dom.description.textContent="Workflow data will appear here when the feed is available. Select an object to inspect its measurements and assessment.";
+        [dom.distance,dom.period,dom.diameter,dom.context].forEach(node=>node.textContent="—");
+        dom.distance.previousElementSibling.textContent="Miss distance";
+        dom.period.previousElementSibling.textContent="Velocity";
+        dom.context.previousElementSibling.textContent="Hazard flag";
+        dom.note.textContent="No object measurements have been received. Reload feed to retry.";
+        dom.modeValue.textContent="Earth / NEO monitor";
+        dom.selectedValue.textContent="Earth";
+        return;
       }
-      starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starPos, 3));
-      const starMat = new THREE.PointsMaterial({ color: 0x71808c, size: 0.07, transparent: true, opacity: 0.58, depthWrite: false });
-      sceneState.stars = new THREE.Points(starGeo, starMat);
+      const solar=state.selected.type==="body";
+      dom.kind.textContent=solar?"Schematic body":"Near-Earth object";
+      dom.name.textContent=entity.name;
+      dom.subname.textContent=solar?entity.kind+" · Solar system reference":"n8n pipeline output · asteroid / NEO";
+      dom.description.textContent=solar?entity.description:entity.assessment;
+      dom.distance.textContent=solar?entity.distance:formatDistance(entity.distance);
+      dom.distance.previousElementSibling.textContent=solar?"Reference distance":"Miss distance";
+      dom.period.previousElementSibling.textContent=solar?"Orbital period":"Velocity";
+      dom.context.previousElementSibling.textContent=solar?"System context":"Hazard flag";
+      dom.period.textContent=solar?entity.period:entity.velocity===null?"Not supplied":Math.round(entity.velocity).toLocaleString()+" km/h";
+      dom.diameter.textContent=solar?entity.diameter:(entity.diameter===null?"Not supplied":Math.round(entity.diameter).toLocaleString()+" m");
+      dom.context.textContent=solar?entity.context:(entity.hazardous===true?"Potentially hazardous":entity.hazardous===false?"Not flagged":"Not supplied");
+      dom.note.innerHTML=solar?"<strong>Display note:</strong> reference values are approximate; the point field is illustrative and not to scale.":"<strong>Input note:</strong> this optional external feed is visualised illustratively. It is not an official orbital or impact-risk source.";
+      if(!solar)dom.note.textContent="Close approach: "+(entity.approach||"Not supplied")+". Workflow assessment shown above; trajectories are illustrative flyby paths, not measured orbits or impact predictions.";
+      dom.modeValue.textContent=state.mode==="solar"?"Solar system":"Earth / NEO monitor";
+      dom.selectedValue.textContent=entity.name;
+      document.querySelectorAll(".entity").forEach(button=>{const isSelected=button.dataset.type===state.selected.type&&(state.selected.type==="body"?SOLAR_BODIES[Number(button.dataset.index)]?.id===state.selected.id:Number(button.dataset.index)===state.selected.index);button.setAttribute("aria-pressed",String(isSelected));});
+    }
+
+    // SCENE
+    function disposeMaterial(material){
+      (Array.isArray(material)?material:[material]).filter(Boolean).forEach(item=>item.dispose());
+    }
+
+    function disposeScene(){
+      cancelAnimationFrame(state.animationFrame);
+      if(sceneState.scene)sceneState.scene.traverse(object=>{object.geometry?.dispose();if(object.material)disposeMaterial(object.material);});
+      sceneState.controls?.dispose();
+      if(sceneState.renderer){
+        sceneState.renderer.domElement.removeEventListener("pointermove",pointerMove);
+        sceneState.renderer.domElement.removeEventListener("click",pointerClick);
+        sceneState.renderer.dispose();
+      }
+      dom.space.replaceChildren();
+      sceneState.bodyObjects.clear();
+      Object.assign(sceneState,{scene:null,camera:null,renderer:null,controls:null,raycaster:null,pointer:null,solarGroup:null,neoGroup:null,stars:null,neoObjects:[],interactive:[],lastFrame:0});
+    }
+
+    function initScene(){
+      const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
+      renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+      renderer.setSize(innerWidth,innerHeight);
+      dom.space.append(renderer.domElement);
+      const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,180);
+      camera.position.copy(state.camera.position);
+      const controls=new OrbitControls(camera,renderer.domElement);
+      controls.enableDamping=true;
+      controls.dampingFactor=.055;
+      controls.addEventListener("start",()=>{state.cameraMoving=false;});
+      controls.enablePan=false;
+      controls.minDistance=3;
+      controls.maxDistance=58;
+      controls.minPolarAngle=.12;
+      controls.maxPolarAngle=Math.PI-.12;
+      controls.addEventListener("change",()=>{if(state.reducedMotion&&sceneState.renderer){updateSceneLabel();sceneState.renderer.render(sceneState.scene,sceneState.camera);}});
+      sceneState.scene=new THREE.Scene();
+      sceneState.scene.background=new THREE.Color(0x000000);
+      sceneState.camera=camera;
+      sceneState.renderer=renderer;
+      sceneState.controls=controls;
+      sceneState.raycaster=new THREE.Raycaster();
+      sceneState.raycaster.params.Points.threshold=.22;
+      sceneState.pointer=new THREE.Vector2();
+      sceneState.solarGroup=new THREE.Group();
+      sceneState.neoGroup=new THREE.Group();
+      sceneState.scene.add(sceneState.solarGroup,sceneState.neoGroup);
+      createStars();
+      createSolarSystem();
+      createNeoField();
+      renderer.domElement.addEventListener("pointermove",pointerMove);
+      renderer.domElement.addEventListener("click",pointerClick);
+      renderer.domElement.addEventListener("pointerdown",event=>{pointerStart={x:event.clientX,y:event.clientY};});
+      renderer.domElement.addEventListener("pointercancel",()=>{pointerStart=null;});
+      applyMode();
+      resize();
+    }
+
+    function createStars(){
+      const count=430;
+      const positions=new Float32Array(count*3);
+      const colors=new Float32Array(count*3);
+      for(let index=0;index<count;index++){
+        const radius=35+Math.random()*90;
+        const theta=Math.random()*Math.PI*2;
+        const phi=Math.acos(2*Math.random()-1);
+        const shade=.1+Math.random()*.24;
+        positions.set([radius*Math.sin(phi)*Math.cos(theta),radius*Math.cos(phi),radius*Math.sin(phi)*Math.sin(theta)],index*3);
+        colors.set([shade,shade,shade],index*3);
+      }
+      const geometry=new THREE.BufferGeometry();
+      geometry.setAttribute("position",new THREE.BufferAttribute(positions,3));
+      geometry.setAttribute("color",new THREE.BufferAttribute(colors,3));
+      sceneState.stars=new THREE.Points(geometry,new THREE.PointsMaterial({size:.07,vertexColors:true,transparent:true,opacity:.78,depthWrite:false}));
       sceneState.scene.add(sceneState.stars);
+    }
 
-      const foregroundStarGeo = new THREE.BufferGeometry();
-      const foregroundStarPos = [];
-      for (let i = 0; i < 300; i++) {
-        foregroundStarPos.push((Math.random() - 0.5) * 125, (Math.random() - 0.5) * 125, (Math.random() - 0.5) * 125);
-      }
-      foregroundStarGeo.setAttribute("position", new THREE.Float32BufferAttribute(foregroundStarPos, 3));
-      const foregroundStarMat = new THREE.PointsMaterial({ color: 0x218fa4, size: 0.13, transparent: true, opacity: 0.48, depthWrite: false });
-      sceneState.foregroundStars = new THREE.Points(foregroundStarGeo, foregroundStarMat);
-      sceneState.scene.add(sceneState.foregroundStars);
-
-      buildThreeJSAsteroids();
-
-      // Interaction
-      sceneState.raycaster = new THREE.Raycaster();
-      sceneState.pointer = new THREE.Vector2(-2, -2);
-      const canvas = sceneState.renderer.domElement;
-      const updatePointer = (event) => {
-        const bounds = canvas.getBoundingClientRect();
-        sceneState.pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
-        sceneState.pointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
-        sceneState.pointerDirty = true;
-      };
-      canvas.addEventListener("pointermove", updatePointer);
-      canvas.addEventListener("pointerdown", (event) => {
-        sceneState.pointerDown = { x: event.clientX, y: event.clientY };
-        updatePointer(event);
-      });
-      canvas.addEventListener("pointerup", (event) => {
-        const started = sceneState.pointerDown;
-        sceneState.pointerDown = null;
-        if (!started) return;
-        const dragDistance = Math.hypot(event.clientX - started.x, event.clientY - started.y);
-        if (dragDistance < 7 && state.hoveredIndex !== -1) selectAsteroid(state.hoveredIndex);
-      });
-      canvas.addEventListener("pointerleave", () => {
-        sceneState.pointer.set(-2, -2);
-        sceneState.pointerDirty = true;
-      });
-      
-      window.addEventListener("resize", () => {
-        sceneState.camera.aspect = window.innerWidth / window.innerHeight;
-        sceneState.camera.updateProjectionMatrix();
-        sceneState.renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-
-      // Keyboard
-      window.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") selectAsteroid(-1);
-        if (e.key === " ") { sceneState.paused = !sceneState.paused; e.preventDefault(); }
-        if (e.key === "r" || e.key === "R") {
-          sceneState.controls.target.set(0,0,0);
-          sceneState.camera.position.set(20, 15, 30);
+    // Deterministic surface art keeps every world recognizable at any visit.
+    const BODY_COLORS={sun:"#ffb52e",mercury:"#aaa398",venus:"#efd08e",earth:"#358ad9",moon:"#b7bdc8",mars:"#d3653d",ceres:"#837f76",jupiter:"#d5ae87",saturn:"#ead5a2",uranus:"#83dfdf",neptune:"#386ade",pluto:"#c4ab93"};
+    function surfaceColor(id,x,y,z){
+      const lon=Math.atan2(z,x),lat=Math.asin(y);
+      const grain=(Math.sin(x*91+y*57+z*73)+Math.sin(x*39-y*83+z*47))*.5;
+      const wave=Math.sin(lon*4+Math.sin(lat*7)*1.3);
+      const color=new THREE.Color(BODY_COLORS[id]);
+      const patch=(cx,cy,cz,width)=>Math.exp(-((x-cx)**2+(y-cy)**2+(z-cz)**2)/width);
+      let detail=1;
+      switch(id){
+        case "sun": detail=1+grain*.24+Math.sin(lon*13+lat*19)*.13;break;
+        case "mercury":
+        case "moon":
+        case "ceres": {
+          const crater=Math.sin(lon*17+Math.sin(lat*13)*2)*Math.cos(lat*21+Math.sin(lon*9));
+          detail=.82+grain*.13+(crater>.65?-.43:crater>.42?.3:0);
+          if(id==="moon")detail-=patch(.6,.2,.75,.2)*.4;
+          break;
         }
-      });
-
-      sceneState.initialized = true;
-      animateLoop();
-    }
-
-    function buildThreeJSAsteroids() {
-      // Clear old
-      sceneState.asteroidMeshes.forEach(m => {
-        sceneState.scene.remove(m.userData.orbit);
-        sceneState.scene.remove(m);
-      });
-      sceneState.asteroidMeshes = [];
-
-      state.asteroids.forEach((ast, i) => {
-        // Flyby Path mapping based on miss distance
-        const baseR = 4.2; // Earth radius is 4
-        // Compress the massive distances logarithmically so they fit on screen
-        const distFactor = Math.log10(Math.max(1, ast.distance / 50000));
-        const r = baseR + distFactor * 2.5 + (i * 0.3); 
-        
-        let color = COLORS[ast.threatCategory.toLowerCase()] || COLORS.muted;
-        if (ast.hazardous) color = COLORS.error; // Explicit red for hazardous objects on the map
-
-        // Flyby corridor (interpretive visualization; not a physical orbital propagation).
-        const pathLength = 32;
-        const pts = [
-            new THREE.Vector3(-pathLength, 0, r),
-            new THREE.Vector3(pathLength, 0, r)
-        ];
-        const oGeo = new THREE.BufferGeometry().setFromPoints(pts);
-        const oMat = new THREE.LineDashedMaterial({ color: color, transparent: true, opacity: 0.2, dashSize: 0.85, gapSize: 1.1, depthWrite: false });
-        const orbit = new THREE.Line(oGeo, oMat);
-        orbit.computeLineDistances();
-        
-        // Stable, deterministic orientation keeps each object recognizable after a data refresh.
-        const visualSeed = `${ast.name}:${Math.round(ast.distance)}`;
-        orbit.rotation.x = (seededUnit(visualSeed, "x") - 0.5) * Math.PI * 1.15;
-        orbit.rotation.y = seededUnit(visualSeed, "y") * Math.PI * 2;
-        orbit.rotation.z = (seededUnit(visualSeed, "z") - 0.5) * Math.PI * 0.7;
-        sceneState.scene.add(orbit);
-
-        const beacon = new THREE.Mesh(
-          new THREE.SphereGeometry(0.1, 12, 12),
-          new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false })
-        );
-        beacon.position.set(0, 0, r);
-        orbit.add(beacon);
-
-        // Faceted target, halo, and reticle make selection legible without external textures.
-        const aGeo = new THREE.IcosahedronGeometry(0.34, 1);
-        const aMat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.96 });
-        const mesh = new THREE.Mesh(aGeo, aMat);
-        const halo = new THREE.Sprite(new THREE.SpriteMaterial({ color: color, transparent: true, opacity: 0.24, blending: THREE.AdditiveBlending, depthWrite: false }));
-        halo.scale.set(2.4, 2.4, 1);
-        mesh.add(halo);
-        const reticle = new THREE.Mesh(
-          new THREE.RingGeometry(0.58, 0.63, 32),
-          new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })
-        );
-        reticle.rotation.z = seededUnit(visualSeed, "reticle") * Math.PI;
-        mesh.add(reticle);
-        
-        mesh.userData = {
-          id: i,
-          radius: r,
-          // Progress along the trajectory path (-pathLength to pathLength)
-          progress: (seededUnit(visualSeed, "progress") * pathLength * 2) - pathLength,
-          // Slower display motion maintains a readable close-approach corridor.
-          speed: Math.min(0.075, (ast.velocity / 1500000) + 0.014),
-          pathLength: pathLength,
-          orbit: orbit,
-          beacon: beacon,
-          halo: halo,
-          reticle: reticle,
-          phase: seededUnit(visualSeed, "phase") * Math.PI * 2,
-          baseColor: color,
-          isHaz: ast.hazardous
-        };
-        
-        sceneState.scene.add(mesh);
-        sceneState.asteroidMeshes.push(mesh);
-      });
-    }
-
-    function updateThreeJSSelection() {
-      sceneState.asteroidMeshes.forEach((mesh, i) => {
-        const isSel = (i === state.selectedIndex);
-        const isHov = (i === state.hoveredIndex);
-        
-        if (isSel) {
-          mesh.material.color.setHex(mesh.userData.isHaz ? COLORS.error : COLORS.accent);
-          mesh.scale.setScalar(1.65);
-          mesh.userData.orbit.material.opacity = 0.9;
-          mesh.userData.orbit.material.color.setHex(mesh.userData.isHaz ? COLORS.error : COLORS.accent);
-          mesh.userData.halo.material.color.setHex(mesh.userData.isHaz ? COLORS.error : COLORS.accent);
-          mesh.userData.halo.material.opacity = 0.92;
-          mesh.userData.reticle.material.color.setHex(mesh.userData.isHaz ? COLORS.error : COLORS.accent);
-          mesh.userData.reticle.material.opacity = 0.94;
-          mesh.userData.beacon.material.color.setHex(mesh.userData.isHaz ? COLORS.error : COLORS.accent);
-          mesh.userData.beacon.material.opacity = 0.94;
-        } else if (isHov) {
-          mesh.material.color.setHex(0xffffff);
-          mesh.scale.setScalar(1.28);
-          mesh.userData.orbit.material.opacity = 0.45;
-          mesh.userData.halo.material.color.setHex(0xffffff);
-          mesh.userData.halo.material.opacity = 0.48;
-          mesh.userData.reticle.material.color.setHex(0xffffff);
-          mesh.userData.reticle.material.opacity = 0.38;
-          mesh.userData.beacon.material.color.setHex(0xffffff);
-          mesh.userData.beacon.material.opacity = 0.52;
-        } else {
-          mesh.material.color.setHex(mesh.userData.baseColor);
-          mesh.scale.setScalar(1.0);
-          mesh.userData.orbit.material.opacity = 0.2;
-          mesh.userData.orbit.material.color.setHex(mesh.userData.baseColor);
-          mesh.userData.halo.material.color.setHex(mesh.userData.baseColor);
-          mesh.userData.halo.material.opacity = 0.24;
-          mesh.userData.reticle.material.color.setHex(mesh.userData.baseColor);
-          mesh.userData.reticle.material.opacity = 0;
-          mesh.userData.beacon.material.color.setHex(mesh.userData.baseColor);
-          mesh.userData.beacon.material.opacity = 0.48;
+        case "venus":detail=1+Math.sin(lat*24+wave*2)*.15+Math.sin(lat*49+lon*3)*.06;break;
+        case "earth": {
+          // Stylized continent silhouettes, oceans, polar ice and wispy cloud lanes.
+          const land=patch(.65,.45,.55,.14)+patch(.5,-.38,.65,.12)+patch(-.65,.35,.5,.23)+patch(-.65,-.4,-.55,.065);
+          color.set(land+grain*.045>.48?"#619974":"#2779c6");
+          if(Math.abs(y)>.91)color.set("#e0f3f6");
+          const cloud=Math.sin(lon*8+lat*19+wave)*Math.sin(lat*23-lon*3);
+          if(cloud>.76)color.lerp(new THREE.Color("#f1f7ff"),.78);
+          detail=1+grain*.06;break;
         }
-      });
+        case "mars":detail=.85+grain*.12+Math.sin(lon*4+lat*8)*.16;if(Math.abs(y)>.93)color.set("#ebdfcc");break;
+        case "jupiter": {
+          const band=Math.sin(lat*29+wave*.65);
+          color.set(band>.32?"#e7d1b1":band<-.3?"#9f7055":"#c69a73");
+          if(patch(.93,-.28,.19,.025)>.42)color.set("#b95035");
+          detail=1+grain*.05;break;
+        }
+        case "saturn":detail=1+Math.sin(lat*36+wave*.2)*.1+grain*.03;break;
+        case "uranus":detail=1+Math.sin(lat*13)*.035;break;
+        case "neptune":detail=.95+Math.sin(lat*22+wave)*.1-patch(.88,-.3,.35,.035)*.45;if(Math.sin(lat*38+lon*2)>.985)color.lerp(new THREE.Color("#b2daf4"),.6);break;
+        case "pluto":detail=.8+grain*.14;if(patch(.85,.22,.4,.09)+patch(.88,.1,.16,.09)>.85)color.set("#f2e0c4");break;
+      }
+      return color.multiplyScalar(Math.max(.22,detail*(id==="sun"?1:.67+x*.25+y*.12)));
     }
 
-    let frames = 0, lastTime = performance.now();
-    
-    function animateLoop() {
-      requestAnimationFrame(animateLoop);
-      
-      // FPS Calculation
-      frames++;
-      let now = performance.now();
-      if (now - lastTime >= 1000) {
-        $("sys-fps").innerText = Math.round((frames * 1000) / (now - lastTime)) + " FPS";
-        frames = 0; lastTime = now;
+    function makePointBody(body){
+      const count=Math.max(1600,body.points*5);
+      const positions=new Float32Array(count*3);
+      const colors=new Float32Array(count*3);
+      const radius=body.radius;
+      for(let index=0;index<count;index++){
+        const y=1-index/(count-1)*2;
+        const ring=Math.sqrt(1-y*y);
+        const theta=Math.PI*(1+Math.sqrt(5))*index;
+        const x=Math.cos(theta)*ring;
+        const z=Math.sin(theta)*ring;
+        const color=surfaceColor(body.id,x,y,z);
+        positions.set([x*radius,y*radius,z*radius],index*3);
+        colors.set([color.r,color.g,color.b],index*3);
       }
+      const geometry=new THREE.BufferGeometry();
+      geometry.setAttribute("position",new THREE.BufferAttribute(positions,3));
+      geometry.setAttribute("color",new THREE.BufferAttribute(colors,3));
+      const pointSize=body.radius*.032;
+      const points=new THREE.Points(geometry,new THREE.PointsMaterial({size:pointSize,vertexColors:true,transparent:true,opacity:.96,depthWrite:true}));
+      points.userData={type:"body",id:body.id,pointSize};
+      points.rotation.z=body.id==="uranus"?1.7:body.id==="saturn"?.47:.12;
+      return points;
+    }
 
-      if (!sceneState.paused) {
-        sceneState.earth.rotation.y += 0.0005;
-        sceneState.earthCore.rotation.y += 0.00042;
-        sceneState.earthWire.rotation.y -= 0.00026;
-        sceneState.atmosphere.rotation.y += 0.0006;
-        sceneState.stars.rotation.y -= 0.0001;
-        sceneState.foregroundStars.rotation.y += 0.00016;
-        sceneState.radarRing.rotation.z += 0.00075;
-        
-        sceneState.asteroidMeshes.forEach(mesh => {
-          mesh.userData.progress += mesh.userData.speed;
-          
-          // Loop the flyby trajectory so they continuously appear
-          if (mesh.userData.progress > mesh.userData.pathLength) {
-              mesh.userData.progress = -mesh.userData.pathLength;
+    function dashedOrbit(radius){
+      const curve=new THREE.EllipseCurve(0,0,radius,radius*.73,0,Math.PI*2,false,0);
+      const points=curve.getPoints(150).map(point=>new THREE.Vector3(point.x,0,point.y));
+      const geometry=new THREE.BufferGeometry().setFromPoints(points);
+      const material=new THREE.LineDashedMaterial({color:0x373737,transparent:true,opacity:.42,dashSize:.18,gapSize:.42,depthWrite:false});
+      const line=new THREE.LineLoop(geometry,material);
+      line.computeLineDistances();
+      return line;
+    }
+
+    function createSolarSystem(){
+      SOLAR_BODIES.forEach((body,index)=>{
+        const object=makePointBody(body);
+        if(body.orbit!==null){
+          const orbit=dashedOrbit(body.orbit);
+          orbit.rotation.x=.22+(index%4)*.08;
+          orbit.rotation.y=index*.33;
+          sceneState.solarGroup.add(orbit);
+          const angle=index*.87;
+          object.position.set(Math.cos(angle)*body.orbit,Math.sin(index*.55)*.45,Math.sin(angle)*body.orbit*.73);
+        }
+        sceneState.solarGroup.add(object);
+        sceneState.bodyObjects.set(body.id,{body,object,orbit:body.orbit});
+        sceneState.interactive.push(object);
+        if(body.ring||body.id==="uranus"){
+          const ringPoints=[];
+          const isSaturn=body.id==="saturn";
+          for(let i=0;i<(isSaturn?3600:1000);i++){
+            const angle=i*2.39996323;
+            const fraction=((i*73)%997)/997;
+            const scale=isSaturn?1.28+fraction*.95:1.65+fraction*.08;
+            if(isSaturn&&scale>1.72&&scale<1.83)continue;
+            ringPoints.push(new THREE.Vector3(Math.cos(angle)*body.radius*scale,0,Math.sin(angle)*body.radius*scale));
           }
-          
-          const r = mesh.userData.radius;
-          // Position along the straight flyby line (X axis represents movement direction)
-          const vec = new THREE.Vector3(mesh.userData.progress, 0, r);
-          vec.applyEuler(mesh.userData.orbit.rotation);
-          mesh.position.copy(vec);
-          mesh.rotation.x += 0.008;
-          mesh.rotation.y += 0.012;
-          mesh.userData.orbit.material.dashOffset -= mesh.userData.speed * 0.08;
-          mesh.userData.reticle.rotation.z += 0.018;
-
-          const selected = mesh.userData.id === state.selectedIndex;
-          const pulse = selected ? 1 + Math.sin(now * 0.004 + mesh.userData.phase) * 0.12 : 1;
-          mesh.userData.reticle.scale.set(pulse, pulse, 1);
-          mesh.userData.halo.scale.set(2.4 * (selected ? pulse : 1), 2.4 * (selected ? pulse : 1), 1);
-        });
-      }
-
-      // Raycast only after a pointer move; controls drags remain separate from object selection.
-      if (sceneState.pointerDirty) {
-        sceneState.pointerDirty = false;
-        sceneState.raycaster.setFromCamera(sceneState.pointer, sceneState.camera);
-        const intersects = sceneState.raycaster.intersectObjects(sceneState.asteroidMeshes);
-        let newHover = -1;
-        if (intersects.length > 0) newHover = intersects[0].object.userData.id;
-        sceneState.renderer.domElement.style.cursor = newHover === -1 ? "grab" : "crosshair";
-        if (newHover !== state.hoveredIndex) {
-          state.hoveredIndex = newHover;
-          updateThreeJSSelection();
+          const ring=new THREE.Points(new THREE.BufferGeometry().setFromPoints(ringPoints),new THREE.PointsMaterial({color:isSaturn?0xc9b794:0x75b8c1,size:body.radius*.023,transparent:true,opacity:isSaturn?.78:.4,depthWrite:false}));
+          ring.userData={type:"body",id:body.id};
+          object.add(ring);
         }
-      }
+      });
+      const earth=sceneState.bodyObjects.get("earth")?.object;
+      const moon=sceneState.bodyObjects.get("moon")?.object;
+      if(earth&&moon)moon.position.copy(earth.position).add(new THREE.Vector3(.7,.2,.25));
+      createDebrisRing(8.1,10.1,620,"asteroid belt");
+      createDebrisRing(18.7,21.6,450,"kuiper belt");
+    }
 
-      // Keep the camera anchored on Earth; selection is expressed by the target reticle and stage readout.
-      sceneState.controls.target.multiplyScalar(0.96);
-      
+    function createDebrisRing(minRadius,maxRadius,count,label){
+      const positions=new Float32Array(count*3);
+      for(let index=0;index<count;index++){
+        const angle=Math.random()*Math.PI*2;
+        const radius=minRadius+Math.random()*(maxRadius-minRadius);
+        positions.set([Math.cos(angle)*radius,(Math.random()-.5)*.3,Math.sin(angle)*radius*.72],index*3);
+      }
+      const geometry=new THREE.BufferGeometry();
+      geometry.setAttribute("position",new THREE.BufferAttribute(positions,3));
+      const points=new THREE.Points(geometry,new THREE.PointsMaterial({color:0x555555,size:.035,transparent:true,opacity:.6,depthWrite:false}));
+      points.userData={label};
+      sceneState.solarGroup.add(points);
+    }
+
+    function createNeoField(){
+      const earth=makePointBody({...SOLAR_BODIES.find(body=>body.id==="earth"),radius:1.55,points:2600});
+      sceneState.neoGroup.add(earth);
+      sceneState.neoEarth=earth;
+      state.neos.forEach((neo,index)=>{
+        const geometry=new THREE.BufferGeometry();
+        geometry.setAttribute("position",new THREE.Float32BufferAttribute([0,0,0],3));
+        const material=new THREE.PointsMaterial({color:neo.hazardous===true?0xe63946:0x4cc9f0,size:.16,sizeAttenuation:true,transparent:true,opacity:.9,depthWrite:false});
+        const point=new THREE.Points(geometry,material);
+        material.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace("#include <clipping_planes_fragment>","#include <clipping_planes_fragment>\nif (length(gl_PointCoord - vec2(0.5)) > 0.5) discard;");};
+        const radius=2.7+(index%6)*.6;
+        const angle=index*.93;
+        point.position.set(Math.cos(angle)*radius,Math.sin(index*.6)*1.3,Math.sin(angle)*radius*.64);
+        point.userData={type:"neo",index};
+        sceneState.neoGroup.add(point);
+        const trailPoints=[];
+        for(let step=0;step<=70;step++){
+          const a=angle-1.2+step/70*2.4;
+          trailPoints.push(new THREE.Vector3(Math.cos(a)*radius,Math.sin(index*.7)*1.2,Math.sin(a)*radius*.64));
+        }
+        const trail=new THREE.Line(new THREE.BufferGeometry().setFromPoints(trailPoints),new THREE.LineBasicMaterial({color:neo.hazardous===true?0xe63946:0x4cc9f0,transparent:true,opacity:.055,depthWrite:false}));
+        material.size=.11;
+        sceneState.neoObjects.push({neo,point,material,radius,angle,trail});
+        sceneState.neoGroup.add(trail);
+        sceneState.interactive.push(point);
+      });
+    }
+
+    function applyMode(){
+      closeEvents();
+      toggleSearch(false);
+      $("objectSearch").value="";
+      const solar=state.mode==="solar";
+      sceneState.solarGroup.visible=solar;
+      sceneState.neoGroup.visible=!solar;
+      dom.solarMode.setAttribute("aria-pressed",String(solar));
+      dom.neoMode.setAttribute("aria-pressed",String(!solar));
+      if(solar&&state.selected.type!=="body")state.selected={type:"body",id:"earth"};
+      if(!solar&&state.selected.type!=="neo"&&state.neos.length)state.selected={type:"neo",index:0};
+      renderCatalog();
+      updateDetails();
+      closeSelection();
+      focusOverview();
+      renderOnce();
+      updateHeader();
+    }
+
+    let feedRefresh=null;
+    async function refreshEarthFeed(){
+      if(feedRefresh)return feedRefresh;
+      const selectedId=state.selected.type==="neo"?currentEntity()?.id:null;
+      feedRefresh=(async()=>{
+        await fetchNeoFeed();
+        if(!sceneState.renderer)return;
+        sceneState.neoGroup.traverse(object=>{object.geometry?.dispose();if(object.material)disposeMaterial(object.material);});
+        sceneState.neoGroup.clear();
+        sceneState.neoObjects=[];
+        createNeoField();
+        if(state.mode==="neo"){
+          const index=state.neos.findIndex(neo=>neo.id===selectedId);
+          state.selected={type:"neo",index:index<0?0:index};
+          renderCatalog();
+          updateDetails();
+          if(state.inspecting)selectEntity(state.selected,false);
+          renderOnce();
+          dom.announcement.textContent=state.neos.length+" near-Earth object records. "+state.dataSource;
+        }
+      })();
+      try{await feedRefresh;}finally{feedRefresh=null;}
+    }
+
+    function openEarthMonitor(){
+      state.mode="neo";
+      state.selected={type:"neo",index:0};
+      applyMode();
+      state.camera.target.set(0,0,0);
+      state.camera.position.set(0,5,12);
+      sceneState.controls.minDistance=1.6;
+      state.cameraMoving=true;
+      renderOnce();
+      void refreshEarthFeed();
+    }
+
+    // INTERACTION
+    function selectEntity(selection,announce){
+      if(selection.type==="body"&&selection.id==="earth"&&announce){openEarthMonitor();return;}
+      state.selected=selection;
+      const entity=currentEntity();
+      if(!entity)return;
+      const object=selection.type==="body"?sceneState.bodyObjects.get(selection.id)?.object:sceneState.neoObjects[selection.index]?.point;
+      if(!object)return;
+      toggleSearch(false);
+      closeEvents();
+      setInspector(true);
+      state.cameraMoving=true;
+      sceneState.bodyObjects.forEach(({object:bodyObject})=>bodyObject.material.size=bodyObject.userData.pointSize);
+      sceneState.neoObjects.forEach(({neo,material,trail,point})=>{material.size=.11;material.color.setHex(neo.hazardous===true?0xe63946:0x4cc9f0);trail.material.opacity=point===object ? .4 : .035;});
+      if(selection.type==="body")object.material.size=object.userData.pointSize*1.1;
+      else {object.material.size=.16;object.material.color.setHex(0xffffff);}
+      state.camera.target.copy(object.position);
+      const focusDirection=object.position.lengthSq()?object.position.clone().normalize():new THREE.Vector3(0,0,1);
+      const focusDistance=selection.type==="body"?Math.max(1.1,entity.radius*(entity.ring?7:5)):5.5;
+      sceneState.controls.minDistance=selection.type==="body"?entity.radius*2.5:3;
+      state.camera.position.copy(object.position).add(focusDirection.add(new THREE.Vector3(.3,.35,.4)).normalize().multiplyScalar(focusDistance));
+      if(selection.type==="neo"){
+        state.camera.target.copy(object.position).multiplyScalar(.15);
+        state.camera.position.set(0,4,sceneState.camera.aspect<1?19:13);
+      }
+      updateDetails();
+      renderCatalog();
+      if(announce)dom.announcement.textContent="Selected "+entity.name+". "+(selection.type==="body"?"Schematic solar-system reference.":"Illustrative NEO feed record.");
+      renderOnce();
+    }
+
+    function updatePointer(event){
+      const bounds=sceneState.renderer.domElement.getBoundingClientRect();
+      sceneState.pointer.x=(event.clientX-bounds.left)/bounds.width*2-1;
+      sceneState.pointer.y=-((event.clientY-bounds.top)/bounds.height*2-1);
+      sceneState.raycaster.setFromCamera(sceneState.pointer,sceneState.camera);
+    }
+
+    function pointerMove(event){
+      updatePointer(event);
+      const group=state.mode==="solar"?sceneState.solarGroup:sceneState.neoGroup;
+      const hit=sceneState.raycaster.intersectObjects(group.children,true).find(result=>result.object.userData.type);
+      sceneState.renderer.domElement.style.cursor=hit?"pointer":"grab";
+    }
+
+    function pointerClick(event){
+      if(!pointerStart||Math.hypot(event.clientX-pointerStart.x,event.clientY-pointerStart.y)>6){pointerStart=null;return;}
+      pointerStart=null;
+      updatePointer(event);
+      const group=state.mode==="solar"?sceneState.solarGroup:sceneState.neoGroup;
+      const hit=sceneState.raycaster.intersectObjects(group.children,true).find(result=>result.object.userData.type);
+      if(hit)selectEntity(hit.object.userData.type==="body"?{type:"body",id:hit.object.userData.id}:{type:"neo",index:hit.object.userData.index},true);
+      else {closeSelection();toggleSearch(false);closeEvents();}
+    }
+
+    function updateSceneLabel(){
+      if(!state.inspecting){dom.label.style.display="none";return;}
+      const object=state.selected.type==="body"?sceneState.bodyObjects.get(state.selected.id)?.object:sceneState.neoObjects[state.selected.index]?.point;
+      const entity=currentEntity();
+      if(!object||!entity){dom.label.style.display="none";return;}
+      const projected=object.position.clone().project(sceneState.camera);
+      const bounds=sceneState.renderer.domElement.getBoundingClientRect();
+      const left=bounds.left+(projected.x*.5+.5)*bounds.width;
+      const top=bounds.top+(-projected.y*.5+.5)*bounds.height;
+      const visible=projected.z>-1&&projected.z<1&&left>bounds.left&&left<bounds.right-150&&top>bounds.top&&top<bounds.bottom;
+      if(!visible){dom.label.style.display="none";state.label.visible=false;return;}
+      const changed=!state.label.visible||Math.abs((state.label.left??left)-left)>.8||Math.abs((state.label.top??top)-top)>.8;
+      if(changed){
+        dom.label.style.display="block";
+        dom.labelName.textContent=entity.name;
+        dom.labelMeta.textContent=state.selected.type==="body"?"schematic reference":"illustrative input";
+        dom.label.style.left=left+"px";
+        dom.label.style.top=top+"px";
+        state.label.left=left;
+        state.label.top=top;
+      }
+      state.label.visible=true;
+    }
+
+    // LIFECYCLE
+    function updateScene(delta,elapsed){
+      if(document.body.classList.contains("sky-open"))return;
+      const motion=state.reducedMotion?0:1;
+      sceneState.stars.rotation.y+=delta*.0012*motion;
+      sceneState.neoObjects.forEach((object,index)=>{
+        const angle=object.angle;
+        object.point.position.set(Math.cos(angle)*object.radius,Math.sin(index*.7)*1.2,Math.sin(angle)*object.radius*.64);
+      });
+      if(state.cameraMoving){
+        const alpha=state.reducedMotion?1:1-Math.exp(-Math.max(delta,.016)*6);
+        sceneState.camera.position.lerp(state.camera.position,alpha);
+        sceneState.controls.target.lerp(state.camera.target,alpha);
+        if(sceneState.camera.position.distanceTo(state.camera.position)<.008){state.cameraMoving=false;}
+      }
       sceneState.controls.update();
-
-      // Update 2D DOM Markers
-      if (sceneState.camera) {
-        // Earth
-        const ePos = new THREE.Vector3(0, 4.5, 0).project(sceneState.camera);
-        if (ePos.z < 1) {
-          $("earthLabel").style.transform = `translate(${(ePos.x * 0.5 + 0.5) * window.innerWidth}px, ${(ePos.y * -0.5 + 0.5) * window.innerHeight}px)`;
-        }
-        
-        // Selected Asteroid Label
-        if (state.selectedIndex !== -1) {
-          const ast = state.asteroids[state.selectedIndex];
-          const mesh = sceneState.asteroidMeshes[state.selectedIndex];
-          const aPos = mesh.position.clone().project(sceneState.camera);
-          
-          if (aPos.z < 1) {
-            $("astLabel").style.display = "block";
-            $("astLabel").style.transform = `translate(${(aPos.x * 0.5 + 0.5) * window.innerWidth + 20}px, ${(aPos.y * -0.5 + 0.5) * window.innerHeight - 20}px)`;
-            $("astLabelName").innerText = ast.name;
-            $("astLabelSub").innerText = ast.approachStr;
-            $("astLabelName").style.color = ast.hazardous ? "var(--error)" : "var(--white)";
-          } else {
-            $("astLabel").style.display = "none";
-          }
-        }
-      }
-
-      sceneState.renderer.render(sceneState.scene, sceneState.camera);
+      updateSceneLabel();
+      sceneState.renderer.render(sceneState.scene,sceneState.camera);
     }
 
-    /* ==========================================================================
-       INITIALIZATION
-       ========================================================================== */
-    async function boot() {
-      $("boot-status").innerHTML = "SYNCING ORBITAL DATA <span class='blink'>[████████░░░░]</span>";
-      
-      const hasData = await fetchFeed();
-      
-      if (hasData) {
-        $("boot-status").innerHTML = "DATA ACQUIRED <span class='blink'>_</span>";
-        setTimeout(() => {
-          $("boot").classList.add("hidden");
-          buildUI();
-          initThreeJS();
-          if(state.asteroids.length > 0) selectAsteroid(0);
-        }, 800);
-      } else {
-        $("boot-status").innerHTML = "NO DATA AVAILABLE. AWAITING FEED <span class='blink'>_</span>";
-        setTimeout(() => {
-          $("boot").classList.add("hidden");
-          initThreeJS();
-        }, 1500);
-      }
+    function renderOnce(){if(sceneState.renderer&&!document.hidden)updateScene(0,performance.now());}
 
-      setInterval(() => {
-        $("global-clock").innerText = new Date().toISOString().substring(11, 19) + " UTC";
-      }, 1000);
-
-      setInterval(async () => {
-        const changed = await fetchFeed();
-        if (changed) {
-          buildUI();
-          buildThreeJSAsteroids();
-          selectAsteroid(state.selectedIndex);
-        }
-      }, REFRESH_INTERVAL_MS);
+    function animationLoop(now){
+      if(!state.pageVisible||state.reducedMotion)return;
+      const delta=Math.min((now-sceneState.lastFrame)/1000,.05);
+      sceneState.lastFrame=now;
+      updateScene(delta,now);
+      state.animationFrame=requestAnimationFrame(animationLoop);
     }
 
-    boot();
+    function resize(){
+      if(!sceneState.camera)return;
+      const bounds=dom.space.getBoundingClientRect();
+      sceneState.camera.aspect=bounds.width/Math.max(bounds.height,1);
+      sceneState.camera.updateProjectionMatrix();
+      sceneState.renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+      sceneState.renderer.setSize(bounds.width,Math.max(bounds.height,1));
+      renderOnce();
+    }
 
+    function focusOverview(){
+      closeSelection();
+      state.cameraMoving=true;
+      const narrow=sceneState.camera&&sceneState.camera.aspect<1;
+      state.camera.position.set(0,state.mode==="neo"?3:14,state.mode==="neo"?(narrow?18:12):(narrow?70:48));
+      if(sceneState.controls)sceneState.controls.maxDistance=100;
+      state.camera.target.set(0,0,0);
+      renderOnce();
+    }
+
+    function handleVisibility(){
+      state.pageVisible=!document.hidden;
+      if(!state.pageVisible){cancelAnimationFrame(state.animationFrame);return;}
+      sceneState.lastFrame=performance.now();
+      if(state.reducedMotion)renderOnce();
+      else state.animationFrame=requestAnimationFrame(animationLoop);
+    }
+
+    async function initialize(){
+      dom.loader.classList.remove("done");
+      await fetchNeoFeed();
+      disposeScene();
+      initScene();
+      state.mode="neo";
+      state.selected={type:"neo",index:0};
+      applyMode();
+      focusOverview();
+      sceneState.lastFrame=performance.now();
+      if(state.reducedMotion)renderOnce();
+      else state.animationFrame=requestAnimationFrame(animationLoop);
+      setTimeout(()=>{dom.loader.classList.add("done");dom.loader.setAttribute("aria-hidden","true");},280);
+    }
+
+    dom.solarMode.addEventListener("click",()=>{state.mode="solar";applyMode();});
+    dom.neoMode.addEventListener("click",openEarthMonitor);
+    dom.overview.addEventListener("click",focusOverview);
+    dom.refresh.addEventListener("click",()=>void refreshEarthFeed());
+    $("searchButton").addEventListener("click",()=>toggleSearch($("searchPanel").hidden));
+    $("closeSearch").addEventListener("click",()=>toggleSearch(false));
+    $("objectSearch").addEventListener("input",renderCatalog);
+    $("closeDetails").addEventListener("click",closeSelection);
+    $("eventsMode").addEventListener("click",openSkyEvents);
+    $("closeEvents").addEventListener("click",()=>{closeEvents();$("eventsMode").focus();});
+    document.addEventListener("keydown",event=>{if(event.key==="Escape"){closeSelection();toggleSearch(false);closeEvents();}if(event.key==="/"&&!/INPUT|TEXTAREA/.test(event.target.tagName)){event.preventDefault();toggleSearch(true);}});
+    addEventListener("resize",resize);
+    document.addEventListener("visibilitychange",handleVisibility);
+    addEventListener("pagehide",disposeScene,{once:true});
+    initSkyEvents();
+    initialize();
   </script>
 </body>
 </html>
