@@ -1,6 +1,6 @@
 {
   "source": "NASA NeoWs",
-  "fetched_at": "2026-09-09T06:30:34.074Z",
+  "fetched_at": "2026-09-09T12:30:33.943Z",
   "asteroids": [
     {
       "id": "3651161:2026-09-09",
@@ -162,8 +162,8 @@
       "name": "465824 (2010 FR)",
       "diameter_min_m": 122.054831812,
       "diameter_meters": 272.922900914,
-      "velocity_kmh": 41734.1938435999,
-      "miss_distance_km": 7757385.760537844,
+      "velocity_kmh": 41734.1946754854,
+      "miss_distance_km": 7757384.713352754,
       "hazardous": true,
       "close_approach_date": "2026-09-11",
       "approach_epoch_ms": 1789165680000,
@@ -246,8 +246,8 @@
       "name": "474158 (1999 FA)",
       "diameter_min_m": 191.6703679668,
       "diameter_meters": 428.5879720462,
-      "velocity_kmh": 23479.0369589145,
-      "miss_distance_km": 19854159.793485004,
+      "velocity_kmh": 23479.0371698924,
+      "miss_distance_km": 19854159.5690882,
       "hazardous": true,
       "close_approach_date": "2026-09-12",
       "approach_epoch_ms": 1789234500000,
