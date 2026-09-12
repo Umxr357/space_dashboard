@@ -1,6 +1,6 @@
 {
   "source": "NASA NeoWs",
-  "fetched_at": "2026-09-12T06:30:34.021Z",
+  "fetched_at": "2026-09-12T12:30:34.065Z",
   "asteroids": [
     {
       "id": "2474158:2026-09-12",
@@ -8,8 +8,8 @@
       "name": "474158 (1999 FA)",
       "diameter_min_m": 191.6703679668,
       "diameter_meters": 428.5879720462,
-      "velocity_kmh": 23479.0361495164,
-      "miss_distance_km": 19854160.451715633,
+      "velocity_kmh": 23479.036557949,
+      "miss_distance_km": 19854159.658846922,
       "hazardous": true,
       "close_approach_date": "2026-09-12",
       "approach_epoch_ms": 1789234500000,
