@@ -1,6 +1,6 @@
 {
   "source": "NASA NeoWs",
-  "fetched_at": "2026-09-13T06:30:34.062Z",
+  "fetched_at": "2026-09-13T12:30:34.125Z",
   "asteroids": [
     {
       "id": "3136724:2026-09-13",
@@ -148,8 +148,8 @@
       "name": "429584 (2011 EU29)",
       "diameter_min_m": 291.4439045349,
       "diameter_meters": 651.6883821679,
-      "velocity_kmh": 75622.5286714001,
-      "miss_distance_km": 20160857.627308913,
+      "velocity_kmh": 75622.5249073016,
+      "miss_distance_km": 20160853.393689193,
       "hazardous": true,
       "close_approach_date": "2026-09-15",
       "approach_epoch_ms": 1789438260000,
