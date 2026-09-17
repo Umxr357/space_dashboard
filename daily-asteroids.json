@@ -1,6 +1,6 @@
 {
   "source": "NASA NeoWs",
-  "fetched_at": "2026-09-17T06:30:34.045Z",
+  "fetched_at": "2026-09-17T12:30:34.043Z",
   "asteroids": [
     {
       "id": "3346470:2026-09-17",
@@ -414,8 +414,8 @@
       "name": "719194 (2018 PL23)",
       "diameter_min_m": 282.1986791034,
       "diameter_meters": 631.0154296359,
-      "velocity_kmh": 80454.5465590796,
-      "miss_distance_km": 26278593.661059354,
+      "velocity_kmh": 80454.5527045496,
+      "miss_distance_km": 26278584.026956525,
       "hazardous": true,
       "close_approach_date": "2026-09-22",
       "approach_epoch_ms": 1790043060000,
