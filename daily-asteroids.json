@@ -1,6 +1,6 @@
 {
   "source": "NASA NeoWs",
-  "fetched_at": "2026-09-20T06:30:33.866Z",
+  "fetched_at": "2026-09-20T12:30:33.998Z",
   "asteroids": [
     {
       "id": "3608622:2026-09-20",
@@ -190,8 +190,8 @@
       "name": "719194 (2018 PL23)",
       "diameter_min_m": 282.1986791034,
       "diameter_meters": 631.0154296359,
-      "velocity_kmh": 80454.5535439746,
-      "miss_distance_km": 26278582.082184214,
+      "velocity_kmh": 80454.539628914,
+      "miss_distance_km": 26278603.459719837,
       "hazardous": true,
       "close_approach_date": "2026-09-22",
       "approach_epoch_ms": 1790043060000,
@@ -386,8 +386,8 @@
       "name": "376848 (2001 RY47)",
       "diameter_min_m": 318.0936332215,
       "diameter_meters": 711.2789870931,
-      "velocity_kmh": 43382.025974074,
-      "miss_distance_km": 19724691.723113485,
+      "velocity_kmh": 43382.0306176204,
+      "miss_distance_km": 19724643.029006798,
       "hazardous": false,
       "close_approach_date": "2026-09-26",
       "approach_epoch_ms": 1790382720000,
