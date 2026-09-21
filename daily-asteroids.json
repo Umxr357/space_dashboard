@@ -1,63 +1,7 @@
 {
   "source": "NASA NeoWs",
-  "fetched_at": "2026-09-20T18:30:33.958Z",
+  "fetched_at": "2026-09-21T00:30:33.942Z",
   "asteroids": [
-    {
-      "id": "3608622:2026-09-20",
-      "nasa_id": "3608622",
-      "name": "(2012 RL15)",
-      "diameter_min_m": 36.6906137531,
-      "diameter_meters": 82.0427064882,
-      "velocity_kmh": 64823.0157941846,
-      "miss_distance_km": 37163915.13695474,
-      "hazardous": false,
-      "close_approach_date": "2026-09-20",
-      "approach_epoch_ms": 1789928400000,
-      "source_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3608622",
-      "assessment": "NASA close-approach record. Displayed diameter is an estimated upper bound. Hazard classification does not mean an impact is predicted."
-    },
-    {
-      "id": "3691354:2026-09-20",
-      "nasa_id": "3691354",
-      "name": "(2014 SJ262)",
-      "diameter_min_m": 21.113244479,
-      "diameter_meters": 47.2106498806,
-      "velocity_kmh": 39487.6109035195,
-      "miss_distance_km": 39953696.98460475,
-      "hazardous": false,
-      "close_approach_date": "2026-09-20",
-      "approach_epoch_ms": 1789923300000,
-      "source_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3691354",
-      "assessment": "NASA close-approach record. Displayed diameter is an estimated upper bound. Hazard classification does not mean an impact is predicted."
-    },
-    {
-      "id": "3797858:2026-09-20",
-      "nasa_id": "3797858",
-      "name": "(2018 BH3)",
-      "diameter_min_m": 22.1082810359,
-      "diameter_meters": 49.435619262,
-      "velocity_kmh": 56756.5083748458,
-      "miss_distance_km": 64369647.79069091,
-      "hazardous": false,
-      "close_approach_date": "2026-09-20",
-      "approach_epoch_ms": 1789878060000,
-      "source_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3797858",
-      "assessment": "NASA close-approach record. Displayed diameter is an estimated upper bound. Hazard classification does not mean an impact is predicted."
-    },
-    {
-      "id": "3888752:2026-09-20",
-      "nasa_id": "3888752",
-      "name": "(2019 UK12)",
-      "diameter_min_m": 18.388867207,
-      "diameter_meters": 41.1187571041,
-      "velocity_kmh": 58745.6281036688,
-      "miss_distance_km": 64886245.33376694,
-      "hazardous": false,
-      "close_approach_date": "2026-09-20",
-      "approach_epoch_ms": 1789890000000,
-      "source_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3888752",
-      "assessment": "NASA close-approach record. Displayed diameter is an estimated upper bound. Hazard classification does not mean an impact is predicted."
-    },
     {
       "id": "3477703:2026-09-21",
       "nasa_id": "3477703",
@@ -490,6 +434,48 @@
       "close_approach_date": "2026-09-26",
       "approach_epoch_ms": 1790390940000,
       "source_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3843612",
+      "assessment": "NASA close-approach record. Displayed diameter is an estimated upper bound. Hazard classification does not mean an impact is predicted."
+    },
+    {
+      "id": "3692560:2026-09-27",
+      "nasa_id": "3692560",
+      "name": "(2014 TU)",
+      "diameter_min_m": 25.5008687857,
+      "diameter_meters": 57.0216760901,
+      "velocity_kmh": 56092.2823787771,
+      "miss_distance_km": 40650768.30598433,
+      "hazardous": false,
+      "close_approach_date": "2026-09-27",
+      "approach_epoch_ms": 1790504340000,
+      "source_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3692560",
+      "assessment": "NASA close-approach record. Displayed diameter is an estimated upper bound. Hazard classification does not mean an impact is predicted."
+    },
+    {
+      "id": "3838859:2026-09-27",
+      "nasa_id": "3838859",
+      "name": "(2019 DJ1)",
+      "diameter_min_m": 11.6025908209,
+      "diameter_meters": 25.9441817907,
+      "velocity_kmh": 44518.6572023876,
+      "miss_distance_km": 42105242.557971746,
+      "hazardous": false,
+      "close_approach_date": "2026-09-27",
+      "approach_epoch_ms": 1790473980000,
+      "source_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3838859",
+      "assessment": "NASA close-approach record. Displayed diameter is an estimated upper bound. Hazard classification does not mean an impact is predicted."
+    },
+    {
+      "id": "3872621:2026-09-27",
+      "nasa_id": "3872621",
+      "name": "(2019 SH7)",
+      "diameter_min_m": 58.4191154186,
+      "diameter_meters": 130.6291132614,
+      "velocity_kmh": 34524.7970068398,
+      "miss_distance_km": 32446692.879890166,
+      "hazardous": false,
+      "close_approach_date": "2026-09-27",
+      "approach_epoch_ms": 1790488200000,
+      "source_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3872621",
       "assessment": "NASA close-approach record. Displayed diameter is an estimated upper bound. Hazard classification does not mean an impact is predicted."
     }
   ]
