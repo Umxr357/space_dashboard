@@ -1,6 +1,6 @@
 {
   "source": "NASA NeoWs",
-  "fetched_at": "2026-09-22T06:30:33.908Z",
+  "fetched_at": "2026-09-22T12:30:33.915Z",
   "asteroids": [
     {
       "id": "3183853:2026-09-22",
@@ -274,8 +274,8 @@
       "name": "376848 (2001 RY47)",
       "diameter_min_m": 318.0936332215,
       "diameter_meters": 711.2789870931,
-      "velocity_kmh": 43382.0306176204,
-      "miss_distance_km": 19724643.029006798,
+      "velocity_kmh": 43382.0327501092,
+      "miss_distance_km": 19724628.75737,
       "hazardous": false,
       "close_approach_date": "2026-09-26",
       "approach_epoch_ms": 1790382720000,
